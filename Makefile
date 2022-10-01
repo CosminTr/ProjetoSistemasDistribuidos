@@ -10,7 +10,7 @@ vpath %.o $(SRC_DIR)
 grupo19: $(OBJETOS)
 	$(CC) $(addprefix $(SRC_DIR)/,$(OBJETOS)) -o $(BIN_DIR)/grupo19 -lrt -lpthread
 
-%.o: src/%.c $($@)
+%.o: source/%.c $($@)
 	$(CC) $(CFLAGS)  -o $(SRC_DIR)/$@ -c $<
 
 clean: 
