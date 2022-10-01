@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <entry.h>
 
 struct entry_t *entry_create(char *key, struct data_t *data) {

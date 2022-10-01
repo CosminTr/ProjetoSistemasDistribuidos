@@ -5,7 +5,7 @@
 
 struct tree_t {
 
-	struct data_t *data;
+	struct entry_t *data;
 	
 	struct tree_t *left;
 	struct tree_t *right;
