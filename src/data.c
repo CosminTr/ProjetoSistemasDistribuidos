@@ -1,5 +1,4 @@
 #include <data.h>
-#include <stdio.h>
 
 struct data_t *data_create(int size) {
     struct data_t *ret;
