@@ -1,5 +1,5 @@
 CC = gcc
-OBJ_DIR = obj
+OBJ_DIR = src
 INC_DIR = include
 BIN_DIR = binary
 OBJETOS = data.o entry.o serialization.o tree.o
