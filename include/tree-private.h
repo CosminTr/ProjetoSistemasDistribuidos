@@ -4,7 +4,11 @@
 #include "tree.h"
 
 struct tree_t {
-	/** a preencher pelo grupo */
+
+	struct data_t *data;
+	
+	struct tree_t *left;
+	struct tree_t *right;
 };
 
 

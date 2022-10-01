@@ -89,7 +89,7 @@ int testCreate3() {
 	assert(data_create2(-1, data_p) == NULL);
 	result = (data_create2(-1, data_p) == NULL);
 
-    	assert(data_create2(0, data_p) == NULL);
+    assert(data_create2(0, data_p) == NULL);
 	result = result && (data_create2(0, data_p) == NULL);
 
 	assert(data_create2(data_size, NULL) == NULL);
