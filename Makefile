@@ -1,7 +1,7 @@
 CC = gcc
 OBJ_DIR = obj
 INC_DIR = include
-BIN_DIR = bin
+BIN_DIR = binary
 OBJETOS = data.o entry.o serialization.o tree.o
 CFLAGS = -Wall -I $(INC_DIR)
 
@@ -15,4 +15,4 @@ grupo19: $(OBJETOS)
 
 clean: 
 	rm -f $(addprefix $(OBJ_DIR)/,$(OBJETOS))
-	rm -f bin/grupo19
+	rm -f binary/grupo19
