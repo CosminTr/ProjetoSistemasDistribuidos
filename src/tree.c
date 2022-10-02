@@ -64,9 +64,26 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
 
 int tree_del(struct tree_t *tree, char *key);
 
-int tree_size(struct tree_t *tree);
+int tree_size(struct tree_t *tree){
+    if(tree == NULL)
+        return 0;
+    else
+        return tree_size(tree->left) + 1 + tree_size(tree->right);
+}
 
-int tree_height(struct tree_t *tree);
+int tree_height(struct tree_t *tree){
+    if(tree == NULL){
+        return 0;
+    }
+    else{
+        int left_size = tree_height(tree->left);
+        int right_size = tree_height(tree->right);
+        if(left_size < right_size)
+            return right_size + 1;
+        else 
+            return left_size + 1;
+    }
+}
 
 char **tree_get_keys(struct tree_t *tree);
 
