@@ -85,7 +85,16 @@ int tree_height(struct tree_t *tree){
     }
 }
 
-char **tree_get_keys(struct tree_t *tree);
+char **tree_get_keys(struct tree_t *tree){ //get keys meio scuffed com funcao auxiliar...possivel melhorar(tentar retornar recursivamente uma lista de keys atualizada)
+    int treeSize = tree_size(tree);
+    char **key_list = malloc(treeSize + 1); // o +1 representa a ultima posicao a /0
+    int *positionCounter = malloc(sizeof(int));
+    *positionCounter = 0;
+    get_keys_recursive(tree, positionCounter, key_list);
+    key_list[treeSize + 1] = "/0"; 
+
+    return key_list;
+}
 
 void **tree_get_values(struct tree_t *tree);
 
@@ -114,5 +123,17 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
             return -1; //something must've gone worng
         }
     }
+}
 
+void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_list){
+    if(tree == NULL){
+        return;
+    }
+    else{
+        get_keys_recursive(tree->left, positionCounter, key_list);
+        *positionCounter += 1;
+        memcpy(key_list[*positionCounter], tree->data->key, strlen(tree->data->key)+1);
+        get_keys_recursive(tree->right, positionCounter, key_list);
+        return;
+    }
 }
