@@ -42,7 +42,25 @@ int tree_put(struct tree_t *tree, char *key, struct data_t *value) {
     return get_status;
 }
 
-struct data_t *tree_get(struct tree_t *tree, char *key);
+struct data_t *tree_get(struct tree_t *tree, char *key){
+    if(tree == NULL || key == NULL){
+        return NULL;
+    }
+    else{
+        int comp = strcmp(tree->data->key, key);
+        if(comp < 0){
+            return tree_get(tree->left, key);
+        }
+        else if(comp > 0){
+            return tree_get(tree->right, key);
+        }
+        else if(comp == 0){
+            return data_dup(tree->data);
+        }
+        else 
+            return NULL;
+    }
+}
 
 int tree_del(struct tree_t *tree, char *key);
 
