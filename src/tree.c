@@ -62,8 +62,54 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     }
 }
 
+struct tree_t* minValNode(struct tree_t* node){
+    struct tree_t* current = node;
+  
+    /* loop down to find the leftmost leaf */
+    while (current && current->left != NULL)
+        current = current->left;
+  
+    return current;
+}
+
+
 int tree_del(struct tree_t *tree, char *key){
-    return 0;
+    //if the key to be deleted < root's key -> left subtree
+    if (strcmp(key, tree->data) < 0)
+        tree->left = tree_del(tree->left, key);
+
+    //if the key to be deleted > root's key -> right subtree
+    else if(strcmp(key, tree->data) > 0)
+        tree->right = tree_del(tree->left, key);
+
+    //if key to be deleted == root's key -> node to be deleted
+    else{
+        //No Children
+        if(tree->left == NULL && tree->right == NULL){
+            tree_del(tree->data, key);
+            return 0;
+        }
+
+        //One Child : replace root with minimum of sub-left tree
+        else if(tree->left == NULL || tree->right==NULL){
+            struct tree_t *temp;
+            if(tree->left == NULL)
+                temp = tree->right;
+            else
+                temp = tree->left;
+            tree_del(tree->data, key);
+            return 0;
+        }
+
+        //Two Children
+        else
+        {
+            struct tree_t *temp = minValNode(tree->right);
+            tree->data = temp->data;
+            tree->right = delete(tree->right, temp->data);
+        }
+    }
+    return -1;
 }
 
 int tree_size(struct tree_t *tree){
