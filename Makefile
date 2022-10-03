@@ -8,7 +8,7 @@ CFLAGS = -Wall -I $(INC_DIR)
 vpath %.o $(SRC_DIR)
 
 grupo19: $(OBJETOS)
-	$(CC) $(addprefix $(SRC_DIR)/,$(OBJETOS)) -o $(BIN_DIR)/grupo19 -lrt -lpthread
+	$(CC) $(addprefix $(SRC_DIR)/,$(OBJETOS)) -g -o $(BIN_DIR)/grupo19 -lrt -lpthread
 
 %.o: source/%.c $($@)
 	$(CC) $(CFLAGS)  -o $(SRC_DIR)/$@ -c $<
