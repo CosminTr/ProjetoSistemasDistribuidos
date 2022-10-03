@@ -98,9 +98,23 @@ char **tree_get_keys(struct tree_t *tree){ //get keys meio scuffed com funcao au
 
 void **tree_get_values(struct tree_t *tree);
 
-void tree_free_keys(char **keys);
+void tree_free_keys(char **keys) {
+    int index = 0;
+    while(*(keys+index) != NULL) {
+        free(*(keys+index));
+        index +=1;
+    }
+    free(keys);
+}
 
-void tree_free_values(void **values);
+void tree_free_values(void **values) {
+    int index = 0;
+    while(*(values+index) != NULL) {
+        free(*(values+index));
+        index +=1;
+    }
+    free(values);
+}
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     if (tree == NULL) { //vazio, ok over!
