@@ -108,6 +108,7 @@ int tree_del(struct tree_t *tree, char *key){
             struct tree_t *temp = minValNode(tree->right);
             tree->data = temp->data;
             tree_del(tree->right, temp->data->key);
+            return 0;
         }
     }
     return -1;
