@@ -90,13 +90,28 @@ char **tree_get_keys(struct tree_t *tree){ //get keys meio scuffed com funcao au
     char **key_list = malloc(treeSize + 1); // o +1 representa a ultima posicao a /0
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;
-    get_keys_recursive(tree, positionCounter, key_list);
+    
+    get_list_recursive(tree, positionCounter, key_list);
     key_list[treeSize + 1] = "/0"; 
-
+    
+    free(positionCounter);
+    
     return key_list;
 }
 
-void **tree_get_values(struct tree_t *tree);
+void **tree_get_values(struct tree_t *tree){
+    int treeSize = tree_size(tree);
+    void **value_list = malloc(treeSize + 1);
+    int *positionCounter = malloc(sizeof(int));
+    *positionCounter = 0;
+
+    get_list_recursive(tree, positionCounter, value_list);
+    value_list[treeSize + 1] = "/0";
+
+    free(positionCounter);
+
+    return value_list;
+}
 
 void tree_free_keys(char **keys);
 
@@ -125,15 +140,15 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     }
 }
 
-void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_list){
+void get_list_recursive(struct tree_t *tree, int *positionCounter, void **list){
     if(tree == NULL){
         return;
     }
     else{
-        get_keys_recursive(tree->left, positionCounter, key_list);
+        get_list_recursive(tree->left, positionCounter, list);
         *positionCounter += 1;
-        memcpy(key_list[*positionCounter], tree->data->key, strlen(tree->data->key)+1);
-        get_keys_recursive(tree->right, positionCounter, key_list);
+        memcpy(list[*positionCounter], tree->data->key, strlen(tree->data->key)+1);
+        get_list_recursive(tree->right, positionCounter, list);
         return;
     }
 }
