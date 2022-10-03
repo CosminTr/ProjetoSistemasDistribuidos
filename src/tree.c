@@ -65,13 +65,14 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
 
 
 int tree_del(struct tree_t *tree, char *key){
+    
     //if the key to be deleted < root's key -> left subtree
     if (strcmp(key, tree->data) < 0)
-        tree->left = tree_del(tree->left, key);
+        tree_del(tree->left, key);
 
     //if the key to be deleted > root's key -> right subtree
     else if(strcmp(key, tree->data) > 0)
-        tree->right = tree_del(tree->left, key);
+        tree_del(tree->right, key);
 
     //if key to be deleted == root's key -> node to be deleted
     else{
@@ -93,10 +94,11 @@ int tree_del(struct tree_t *tree, char *key){
         }
 
         //Two Children
-        else{
+        else
+        {
             struct tree_t *temp = minValNode(tree->right);
             tree->data = temp->data;
-            tree->right = delete(tree->right, temp->data);
+            tree->right = tree_del(tree->right, temp->data);
         }
     }
     return -1;
