@@ -35,9 +35,9 @@ int tree_put(struct tree_t *tree, char *key, struct data_t *value) {
 
     int get_status = tree_put_recursive(tree, entry); //recursion starts here
 
-    entry_destroy(entry); //destroy stuff before closing
-    data_destroy(duped_value);
-    free(duped_key);
+    //entry_destroy(entry); //destroy stuff before closing
+    //data_destroy(duped_value);
+    //free(duped_key);
 
     return get_status;
 }
@@ -67,7 +67,7 @@ int tree_del(struct tree_t *tree, char *key){
 }
 
 int tree_size(struct tree_t *tree){
-    if(tree == NULL)
+    if(tree == NULL || tree->data == NULL)
         return 0;
     else
         return tree_size(tree->left) + 1 + tree_size(tree->right);
@@ -135,7 +135,12 @@ void tree_free_values(void **values) {
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     if (tree == NULL) { //vazio, ok over!
-        entry_replace(tree->data, entry->key, entry->value);
+        tree = tree_create();
+        tree->data = entry;
+        return 0;
+    }
+    else if(tree->data == NULL){
+        tree->data = entry;
         return 0;
     }
     else { 
