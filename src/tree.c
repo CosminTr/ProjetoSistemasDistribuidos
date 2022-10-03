@@ -63,6 +63,16 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
 }
 
 
+struct tree_t* minValNode(struct tree_t* node){
+    struct tree_t* current = node;
+  
+    /* loop down to find the leftmost leaf */
+    while (current && current->left != NULL)
+        current = current->left;
+  
+    return current;
+};
+
 
 int tree_del(struct tree_t *tree, char *key){
     
