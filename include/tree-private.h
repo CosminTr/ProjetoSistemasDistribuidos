@@ -11,15 +11,7 @@ struct tree_t {
 	struct tree_t *right;
 };
 
-struct tree_t *minValNode(strct tree_t *node){
-	struct tree_t* current = node;
-  
-    /* loop down to find the leftmost leaf */
-    while (current && current->left != NULL)
-        current = current->left;
-  
-    return current;
-};
+struct tree_t *minValNode(struct tree_t *node);
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry);
 
