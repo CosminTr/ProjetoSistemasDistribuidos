@@ -102,8 +102,7 @@ int tree_del(struct tree_t *tree, char *key){
         }
 
         //Two Children
-        else
-        {
+        else{
             struct tree_t *temp = minValNode(tree->right);
             tree->data = temp->data;
             tree->right = delete(tree->right, temp->data);
