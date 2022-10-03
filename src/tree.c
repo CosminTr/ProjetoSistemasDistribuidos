@@ -8,15 +8,11 @@
 #include <data.h>
 
 struct tree_t *tree_create() {
-    struct tree_t *tree = malloc(sizeof(struct tree_t));
+    struct tree_t *tree;
+    tree = malloc(sizeof(struct tree_t));
     tree->data = NULL;
     tree->left = NULL;
     tree->right = NULL;
-    
-    if(tree != NULL)
-        return tree;
-    else 
-        return NULL;
 }
 
 void tree_destroy(struct tree_t *tree) {
@@ -53,10 +49,10 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     else{
         int comp = strcmp(tree->data->key, key);
         if(comp < 0){
-            return tree_get(tree->right, key);
+            return tree_get(tree->left, key);
         }
         else if(comp > 0){
-            return tree_get(tree->left, key);
+            return tree_get(tree->right, key);
         }
         else if(comp == 0){
             return data_dup(tree->data->value);
@@ -66,8 +62,19 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     }
 }
 
+
+struct tree_t* minValNode(struct tree_t* node){
+    struct tree_t* current = node;
+  
+    /* loop down to find the leftmost leaf */
+    while (current && current->left != NULL)
+        current = current->left;
+  
+    return current;
+};
+
+
 int tree_del(struct tree_t *tree, char *key){
-    
     //if the key to be deleted < root's key -> left subtree
     if (strcmp(key, tree->data->key) < 0)
         tree_del(tree->left, key);
@@ -78,43 +85,34 @@ int tree_del(struct tree_t *tree, char *key){
 
     //if key to be deleted == root's key -> node to be deleted
     else{
-        //No Children
+        //No Children: node deleted
         if(tree->left == NULL && tree->right == NULL){
-            tree_del(tree/*->data*/, key);
+            entry_destroy(tree->data);
             return 0;
         }
 
-        //One Child : replace root with minimum of sub-left tree
+        //One Child: replace root with minimum of sub-left tree
         else if(tree->left == NULL || tree->right==NULL){
             struct tree_t *temp;
             if(tree->left == NULL)
                 temp = tree->right;
             else
                 temp = tree->left;
-            tree_del(tree/*->data*/, key);
+            entry_replace(tree->data, temp->data->key, temp->data->value);
+            entry_destroy(tree->data);
             return 0;
         }
 
         //Two Children
-        else
-        {
+        else{
             struct tree_t *temp = minValNode(tree->right);
             tree->data = temp->data;
             tree_del(tree->right, temp->data->key);
         }
     }
     return -1;
+    
 }
-
-struct tree_t *minValNode(struct tree_t *node){
-	struct tree_t* current = node;
-  
-    /* loop down to find the leftmost leaf */
-    while (current && current->left != NULL)
-        current = current->left;
-  
-    return current;
-};
 
 int tree_size(struct tree_t *tree){
     if(tree == NULL || tree->data == NULL)
@@ -185,7 +183,9 @@ void tree_free_values(void **values) {
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     if (tree == NULL) { //vazio, ok over!
-        return -1;
+        tree = tree_create();
+        tree->data = entry;
+        return 0;
     }
     else if(tree->data == NULL){
         tree->data = entry;
@@ -194,21 +194,13 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     else { 
         int comp = entry_compare(entry, tree->data);
         if (comp < 0) { //go left
-            if(tree->left == NULL){
-                struct tree_t *new_node = tree_create();
-                tree->left = new_node;
-            }
             return tree_put_recursive(tree->left, entry);
         }
         else if (comp >0) { //go right
-            if(tree->right == NULL){
-                struct tree_t *new_node = tree_create();
-                tree->right = new_node;
-            }
             return tree_put_recursive(tree->right, entry);
         }
         else if (comp == 0) { //already existing key
-            entry_replace(tree->data, entry->key, entry->value); 
+            entry_replace(tree->data, entry->key, entry->value);
             return 0;
         }
         else {
