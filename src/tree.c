@@ -8,11 +8,15 @@
 #include <data.h>
 
 struct tree_t *tree_create() {
-    struct tree_t *tree;
-    tree = malloc(sizeof(struct tree_t));
+    struct tree_t *tree = malloc(sizeof(struct tree_t));
     tree->data = NULL;
     tree->left = NULL;
     tree->right = NULL;
+
+    if(tree != NULL)
+        return tree;
+    else 
+        return NULL;
 }
 
 void tree_destroy(struct tree_t *tree) {
@@ -49,10 +53,10 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     else{
         int comp = strcmp(tree->data->key, key);
         if(comp < 0){
-            return tree_get(tree->left, key);
+            return tree_get(tree->right, key);
         }
         else if(comp > 0){
-            return tree_get(tree->right, key);
+            return tree_get(tree->left, key);
         }
         else if(comp == 0){
             return data_dup(tree->data->value);
@@ -184,9 +188,7 @@ void tree_free_values(void **values) {
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     if (tree == NULL) { //vazio, ok over!
-        tree = tree_create();
-        tree->data = entry;
-        return 0;
+        return -1;
     }
     else if(tree->data == NULL){
         tree->data = entry;
@@ -195,13 +197,22 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
     else { 
         int comp = entry_compare(entry, tree->data);
         if (comp < 0) { //go left
+            if(tree->left == NULL){
+                struct tree_t *new_node = tree_create();
+                tree->left = new_node;
+            }
             return tree_put_recursive(tree->left, entry);
         }
         else if (comp >0) { //go right
+            if(tree->right == NULL){
+                struct tree_t *new_node = tree_create();
+                tree->right = new_node;
+            }
             return tree_put_recursive(tree->right, entry);
         }
         else if (comp == 0) { //already existing key
             entry_replace(tree->data, entry->key, entry->value);
+            entry_replace(tree->data, entry->key, entry->value); 
             return 0;
         }
         else {
