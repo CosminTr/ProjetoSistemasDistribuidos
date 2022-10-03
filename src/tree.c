@@ -66,7 +66,6 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     }
 }
 
-
 struct tree_t* minValNode(struct tree_t* node){
     struct tree_t* current = node;
   
@@ -77,45 +76,44 @@ struct tree_t* minValNode(struct tree_t* node){
     return current;
 };
 
-
 int tree_del(struct tree_t *tree, char *key){
-    //if the key to be deleted < root's key -> left subtree
-    if (strcmp(key, tree->data->key) < 0)
-        tree_del(tree->left, key);
+    // //if the key to be deleted < root's key -> left subtree
+    // if (strcmp(key, tree->data->key) < 0)
+    //     tree_del(tree->left, key);
 
-    //if the key to be deleted > root's key -> right subtree
-    else if(strcmp(key, tree->data->key) > 0)
-        tree_del(tree->right, key);
+    // //if the key to be deleted > root's key -> right subtree
+    // else if(strcmp(key, tree->data->key) > 0)
+    //     tree_del(tree->right, key);
 
-    //if key to be deleted == root's key -> node to be deleted
-    else{
-        //No Children: node deleted
-        if(tree->left == NULL && tree->right == NULL){
-            entry_destroy(tree->data);
-            return 0;
-        }
+    // //if key to be deleted == root's key -> node to be deleted
+    // else{
+    //     //No Children: node deleted
+    //     if(tree->left == NULL && tree->right == NULL){
+    //         entry_destroy(tree->data);
+    //         return 0;
+    //     }
 
-        //One Child: replace root with minimum of sub-left tree
-        else if(tree->left == NULL || tree->right==NULL){
-            struct tree_t *temp;
-            if(tree->left == NULL)
-                temp = tree->right;
-            else
-                temp = tree->left;
-            entry_replace(tree->data, temp->data->key, temp->data->value);
-            entry_destroy(tree->data);
-            return 0;
-        }
+    //     //One Child: replace root with minimum of sub-left tree
+    //     else if(tree->left == NULL || tree->right==NULL){
+    //         struct tree_t *temp;
+    //         if(tree->left == NULL)
+    //             temp = tree->right;
+    //         else
+    //             temp = tree->left;
+    //         entry_replace(tree->data, temp->data->key, temp->data->value);
+    //         entry_destroy(tree->data);
+    //         return 0;
+    //     }
 
-        //Two Children
-        else{
-            struct tree_t *temp = minValNode(tree->right);
-            tree->data = temp->data;
-            tree_del(tree->right, temp->data->key);
-            return 0;
-        }
-    }
-    return -1;
+    //     //Two Children
+    //     else{
+    //         struct tree_t *temp = minValNode(tree->right);
+    //         tree->data = temp->data;
+    //         tree_del(tree->right, temp->data->key);
+    //         return 0;
+    //     }
+    // }
+    return 0;
     
 }
 
@@ -212,7 +210,6 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
         }
         else if (comp == 0) { //already existing key
             entry_replace(tree->data, entry->key, entry->value);
-            entry_replace(tree->data, entry->key, entry->value); 
             return 0;
         }
         else {
