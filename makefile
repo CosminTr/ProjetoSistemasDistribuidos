@@ -1,10 +1,10 @@
 #makefile incompleto(apenas para testes parciais)
 
 OBJ_dir = obj
-OBJ = data.o test_data.o
+OBJ = data.o entry.o tree.o test_tree.o
 
-test_data: $(OBJ)
-	gcc $(addprefix $(OBJ_dir)/,$(OBJ)) -g -o bin/test_data 
+test: $(OBJ)
+	gcc $(addprefix $(OBJ_dir)/,$(OBJ)) -g -o bin/test
 
 %.o: src/%.c
 	gcc $< -c -I include -g -o $(OBJ_dir)/$@

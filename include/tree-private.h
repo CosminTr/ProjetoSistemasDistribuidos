@@ -11,5 +11,10 @@ struct tree_t {
 	struct tree_t *right;
 };
 
+int tree_put_recursive(struct tree_t *tree, struct entry_t *entry);
+
+void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_list);
+
+void get_values_recursive(struct tree_t *tree, int *positionCounter, void **value_list);
 
 #endif
