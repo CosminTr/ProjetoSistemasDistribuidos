@@ -13,8 +13,8 @@
  */
 int keyArray_to_buffer(char **keys, char **keys_buf){
 
-    int size = strlen(*keys)+1;
-    keys_buf = malloc(sizeof(char)+ size);
+    int keys_buf_size = strlen(*keys)+1;
+    keys_buf = malloc(sizeof(char)+ keys_buf_size);
     if (keys_buf == NULL) {
         return -1;
     }
