@@ -31,6 +31,13 @@ int keyArray_to_buffer(char **keys, char **keys_buf){
 */
 
  char** buffer_to_keyArray(char *keys_buf, int keys_buf_size){
-    
+    char **keyarray = malloc(sizeof(char)+ keys_buf_size);
+    if (keys_buf == NULL) {
+        return NULL;
+    }
+
+    memcpy(&keyarray, &keys_buf, sizeof(keyarray));
+
+    return keyarray;
 } 
 
