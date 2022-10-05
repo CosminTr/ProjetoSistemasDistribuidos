@@ -13,6 +13,8 @@ struct tree_t {
 
 struct tree_t *minValNode(struct tree_t *node);
 
+void tree_del_recursive(struct tree_t *toDelete, struct tree_t *tree, int path);
+
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry);
 
 void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_list);

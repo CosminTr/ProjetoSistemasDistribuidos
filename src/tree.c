@@ -76,45 +76,105 @@ struct tree_t* minValNode(struct tree_t* node){
     return current;
 };
 
-int tree_del(struct tree_t *tree, char *key){
-    // //if the key to be deleted < root's key -> left subtree
-    // if (strcmp(key, tree->data->key) < 0)
-    //     tree_del(tree->left, key);
+// int tree_del(struct tree_t *tree, char *key){
+//     //if the key to be deleted < root's key -> left subtree
+//     if (strcmp(key, tree->data->key) < 0)
+//         tree_del(tree->left, key);
 
-    // //if the key to be deleted > root's key -> right subtree
-    // else if(strcmp(key, tree->data->key) > 0)
-    //     tree_del(tree->right, key);
+//     //if the key to be deleted > root's key -> right subtree
+//     else if(strcmp(key, tree->data->key) > 0)
+//         tree_del(tree->right, key);
 
-    // //if key to be deleted == root's key -> node to be deleted
-    // else{
-    //     //No Children: node deleted
-    //     if(tree->left == NULL && tree->right == NULL){
-    //         entry_destroy(tree->data);
-    //         return 0;
-    //     }
+//     //if key to be deleted == root's key -> node to be deleted
+//     else{
+//         //No Children: node deleted
+//         if(tree->left == NULL && tree->right == NULL){
+//             entry_destroy(tree->data);
+//             //fazer free do tree?
+//             return 0;
+//         }
 
-    //     //One Child: replace root with minimum of sub-left tree
-    //     else if(tree->left == NULL || tree->right==NULL){
-    //         struct tree_t *temp;
-    //         if(tree->left == NULL)
-    //             temp = tree->right;
-    //         else
-    //             temp = tree->left;
-    //         entry_replace(tree->data, temp->data->key, temp->data->value);
-    //         entry_destroy(tree->data);
-    //         return 0;
-    //     }
+//         //One Child: replace root with minimum of sub-left tree
+//         else if(tree->left == NULL || tree->right==NULL){
+//             struct tree_t *temp;
+//             if(tree->left == NULL)
+//                 temp = tree->right;
+//             else
+//                 temp = tree->left;
+//             entry_replace(tree->data, temp->data->key, temp->data->value);
+//             entry_destroy(tree->data);
+//             return 0;
+//         }
 
-    //     //Two Children
-    //     else{
-    //         struct tree_t *temp = minValNode(tree->right);
-    //         tree->data = temp->data;
-    //         tree_del(tree->right, temp->data->key);
-    //         return 0;
-    //     }
-    // }
-    return 0;
+//         //Two Children
+//         else{
+//             struct tree_t *temp = minValNode(tree->right);
+//             tree->data = temp->data;
+//             tree_del(tree->right, temp->data->key);
+//             return 0;
+//         }
+//     }
+//     return 0;
     
+// }
+
+int tree_del(struct tree_t *tree, char *key){
+    if(tree == NULL)
+        return -1;
+    if(strcmp(tree->data->key, key) < 0)
+        tree_del(tree->left, key);
+    else if(strcmp(tree->data->key, key) > 0)
+        tree_del(tree->right, key);
+    else if(strcmp(tree->data->key, key) == 0){
+        //caso 1 --- node nao tem filhos
+        if(tree->left == NULL && tree->right == NULL){
+            entry_destroy(tree->data);
+            free(tree);
+            return 0;
+        } 
+        //caso 2 --- 1 filho Right -> queremos o menor(mais a esquerda) do filho da direita
+        else if(tree->left == NULL){
+            tree_del_recursive(tree, tree->right, 1);
+            return 0;
+        }
+        // caso 3 --- node tem 2 filhos ou 1 Left(tendo 2 filhos ou 1 o processo e o mesmo)
+        else if(tree->left == NULL){
+            tree_del_recursive(tree, tree->left, 0);
+            return 0;
+        }
+    }
+}
+
+// tree vai ser inicialmente o filho direito ou esquerdo do toDelete
+// path sera o caminho a seguir conforme esse deleteChild(se deleteChild é o filho direito, 
+// teremos de ir pelo caminhho esquerdo da arvore path == 0, se deleteChild for o filho esquerdo, 
+// teremos de ir pelo caminho direito da arvore path == 1)
+
+void tree_del_recursive(struct tree_t *toDelete, struct tree_t *tree, int path){
+    if(path == 0){
+        if(tree->right->right == NULL){
+            struct tree_t *temp;
+            temp = tree->right;
+            tree->right = temp->left;
+            temp->left = NULL;
+            entry_replace(toDelete->data, temp->data->key, temp->data->value);
+            free(temp);
+        }
+        else 
+            return tree_del_recursive(toDelete, tree->right, 0);
+    }
+    else if(path == 1){
+        if(tree->left->left == NULL){
+            struct tree_t *temp;
+            temp = tree->left;
+            tree->left = temp->right;
+            temp->right = NULL;
+            entry_replace(toDelete->data, temp->data->key, temp->data->value);
+            free(temp);
+        }
+        else
+            return tree_del_recursive(toDelete, tree->left, 1);
+    }
 }
 
 int tree_size(struct tree_t *tree){
@@ -140,7 +200,7 @@ int tree_height(struct tree_t *tree){
 
 char **tree_get_keys(struct tree_t *tree){ //get keys meio scuffed com funcao auxiliar...possivel melhorar(tentar retornar recursivamente uma lista de keys atualizada)
     int treeSize = tree_size(tree);
-    char **key_list = malloc(treeSize + 1); // o +1 representa a ultima posicao a /0
+    char **key_list = malloc((treeSize + 1)* sizeof(*key_list)); // o +1 representa a ultima posicao a /0
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;
     
@@ -154,7 +214,7 @@ char **tree_get_keys(struct tree_t *tree){ //get keys meio scuffed com funcao au
 
 void **tree_get_values(struct tree_t *tree){
     int treeSize = tree_size(tree);
-    void **value_list = malloc(treeSize + 1);
+    void **value_list = malloc((treeSize + 1) * sizeof(*value_list));
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;
 
@@ -173,7 +233,7 @@ void tree_free_keys(char **keys) {
         free(keys[index]);
         index +=1;
     }
-    //free(keys);
+    free(keys);
 }
 
 void tree_free_values(void **values) {
@@ -211,6 +271,7 @@ int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
         }
         else if (comp == 0) { //already existing key
             entry_replace(tree->data, entry->key, entry->value);
+            free(entry);
             return 0;
         }
         else {
@@ -226,7 +287,7 @@ void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_li
     else{
         get_keys_recursive(tree->left, positionCounter, key_list);
         key_list[*positionCounter] = malloc(strlen(tree->data->key)+1);
-        memcpy(key_list[*positionCounter], tree->data->key, strlen(tree->data->key)+1);
+        strcpy(key_list[*positionCounter], tree->data->key);
         *positionCounter += 1;
         get_keys_recursive(tree->right, positionCounter, key_list);
         return;
@@ -238,9 +299,8 @@ void get_values_recursive(struct tree_t *tree, int *positionCounter, void **valu
         return;
     }
     else{
-        get_values_recursive(tree->left, positionCounter, value_list);
-        value_list[*positionCounter] = malloc(tree->data->value->datasize + 1);
-        memcpy(value_list[*positionCounter], tree->data->value, tree->data->value->datasize+1);
+        get_values_recursive(tree->left, positionCounter, value_list); 
+        value_list[*positionCounter] = data_dup(tree->data->value);
         *positionCounter += 1;
         get_values_recursive(tree->right, positionCounter, value_list);
         return;
