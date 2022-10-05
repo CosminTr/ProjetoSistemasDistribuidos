@@ -115,7 +115,7 @@ struct tree_t* minValTree(struct tree_t* node){
 //             return 0;
 //         }
 //     }
-//     return 0;
+//     return -1;
     
 // }
 
