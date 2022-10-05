@@ -66,7 +66,7 @@ struct data_t *tree_get(struct tree_t *tree, char *key){
     }
 }
 
-struct tree_t* minValNode(struct tree_t* node){
+struct tree_t* minValTree(struct tree_t* node){
     struct tree_t* current = node;
   
     /* loop down to find the leftmost leaf */
@@ -90,7 +90,7 @@ struct tree_t* minValNode(struct tree_t* node){
 //         //No Children: node deleted
 //         if(tree->left == NULL && tree->right == NULL){
 //             entry_destroy(tree->data);
-//             //fazer free do tree?
+//             //free tree?
 //             return 0;
 //         }
 
@@ -102,7 +102,8 @@ struct tree_t* minValNode(struct tree_t* node){
 //             else
 //                 temp = tree->left;
 //             entry_replace(tree->data, temp->data->key, temp->data->value);
-//             entry_destroy(tree->data);
+//             // acho que nao faz sentido 
+//             //entry_destroy(tree->data);
 //             return 0;
 //         }
 
@@ -119,30 +120,10 @@ struct tree_t* minValNode(struct tree_t* node){
 // }
 
 int tree_del(struct tree_t *tree, char *key){
-    if(tree == NULL)
+    if(tree == NULL || key == NULL)
         return -1;
-    if(strcmp(tree->data->key, key) < 0)
-        tree_del(tree->left, key);
-    else if(strcmp(tree->data->key, key) > 0)
-        tree_del(tree->right, key);
-    else if(strcmp(tree->data->key, key) == 0){
-        //caso 1 --- node nao tem filhos
-        if(tree->left == NULL && tree->right == NULL){
-            entry_destroy(tree->data);
-            free(tree);
-            return 0;
-        } 
-        //caso 2 --- 1 filho Right -> queremos o menor(mais a esquerda) do filho da direita
-        else if(tree->left == NULL){
-            tree_del_recursive(tree, tree->right, 1);
-            return 0;
-        }
-        // caso 3 --- node tem 2 filhos ou 1 Left(tendo 2 filhos ou 1 o processo e o mesmo)
-        else if(tree->left == NULL){
-            tree_del_recursive(tree, tree->left, 0);
-            return 0;
-        }
-    }
+    tree_del_recursive(tree, key);
+    return 0;
 }
 
 // tree vai ser inicialmente o filho direito ou esquerdo do toDelete
@@ -150,31 +131,38 @@ int tree_del(struct tree_t *tree, char *key){
 // teremos de ir pelo caminhho esquerdo da arvore path == 0, se deleteChild for o filho esquerdo, 
 // teremos de ir pelo caminho direito da arvore path == 1)
 
-void tree_del_recursive(struct tree_t *toDelete, struct tree_t *tree, int path){
-    if(path == 0){
-        if(tree->right->right == NULL){
-            struct tree_t *temp;
-            temp = tree->right;
-            tree->right = temp->left;
-            temp->left = NULL;
-            entry_replace(toDelete->data, temp->data->key, temp->data->value);
-            free(temp);
+struct tree_t *tree_del_recursive(struct tree_t *root, char *key){
+    if(root == NULL)
+        return root;
+    
+
+    if(strcmp(root->data->key, key) < 0)
+        root->right = tree_del_recursive(root->right, key);
+    
+    else if(strcmp(root->data->key, key) > 0)
+        root->left = tree_del_recursive(root->left, key);
+    
+    else{
+        
+        if(root->left == NULL){
+            struct tree_t *temp = root->right;
+            free(root);
+            return temp;
         }
-        else 
-            return tree_del_recursive(toDelete, tree->right, 0);
-    }
-    else if(path == 1){
-        if(tree->left->left == NULL){
-            struct tree_t *temp;
-            temp = tree->left;
-            tree->left = temp->right;
-            temp->right = NULL;
-            entry_replace(toDelete->data, temp->data->key, temp->data->value);
-            free(temp);
+        else if(root->right == NULL){
+            struct tree_t *temp = root->left;
+            free(root);
+            return temp;
         }
-        else
-            return tree_del_recursive(toDelete, tree->left, 1);
+        
+        struct tree_t *temp = minValTree(root->right);
+
+        root->data->key = temp->data->key;
+
+        root->right = tree_del_recursive(root->right, key);
     }
+
+    return root;
 }
 
 int tree_size(struct tree_t *tree){
@@ -229,7 +217,6 @@ void **tree_get_values(struct tree_t *tree){
 void tree_free_keys(char **keys) {
     int index = 0;
     while(keys[index] != NULL) {
-        printf("INDEX %d\n", index);
         free(keys[index]);
         index +=1;
     }

@@ -11,9 +11,9 @@ struct tree_t {
 	struct tree_t *right;
 };
 
-struct tree_t *minValNode(struct tree_t *node);
+struct tree_t *minValTree(struct tree_t *node);
 
-void tree_del_recursive(struct tree_t *toDelete, struct tree_t *tree, int path);
+struct tree_t *tree_del_recursive(struct tree_t *root, char* key);
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry);
 
