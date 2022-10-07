@@ -4,6 +4,12 @@
 
 #include "serialization.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 int keyArray_to_buffer(char **keys, char **keys_buf){
     if(keys  == NULL){
         return -1;

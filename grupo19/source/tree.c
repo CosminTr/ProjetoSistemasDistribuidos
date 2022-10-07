@@ -7,6 +7,12 @@
 #include <entry.h>
 #include <data.h>
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct tree_t *tree_create() {
     struct tree_t *tree = malloc(sizeof(struct tree_t));
     tree->data = NULL;

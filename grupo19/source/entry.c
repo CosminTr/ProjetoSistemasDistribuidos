@@ -4,6 +4,12 @@
 
 #include <entry.h>
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct entry_t *entry_create(char *key, struct data_t *data) {
     struct entry_t *ret = malloc(sizeof(struct entry_t));
     ret->key = key;

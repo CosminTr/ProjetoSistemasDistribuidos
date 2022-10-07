@@ -4,11 +4,10 @@
 
 #include "data.h"
 
-/*
-Trabalho realizado por 
-Cosmin Trandafir fc57101
-Beatriz Silva fc52911
-João Serafim
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
 */
 
 struct data_t *data_create(int size) {
