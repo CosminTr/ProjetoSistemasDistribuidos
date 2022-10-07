@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <serialization.h>
+#include "serialization.h"
 
 int keyArray_to_buffer(char **keys, char **keys_buf){
     if(keys  == NULL){
@@ -22,7 +22,7 @@ int keyArray_to_buffer(char **keys, char **keys_buf){
 
     int size = 0;
     int offset = sizeof(int);
-    memcpy(keys_buf, num_words, sizeof(int));
+    memcpy(keys_buf, &num_words, sizeof(int));
     
     for (int i = 0; i < num_words; i++){
         size = strlen(keys[i])+1;

@@ -4,6 +4,13 @@
 
 #include "data.h"
 
+/*
+Trabalho realizado por 
+Cosmin Trandafir fc57101
+Beatriz Silva fc52911
+João Serafim
+*/
+
 struct data_t *data_create(int size) {
     if(size < 1 )
         return NULL;
