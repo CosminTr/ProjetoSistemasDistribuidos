@@ -37,13 +37,13 @@ int tree_put(struct tree_t *tree, char *key, struct data_t *value) {
     struct data_t *duped_value = data_dup(value);
     struct entry_t *entry = entry_create(duped_key, duped_value);
 
-    int get_status = tree_put_recursive(tree, entry); //recursion starts here
+    return tree_put_recursive(tree, entry); //recursion starts here
 
     //entry_destroy(entry); //destroy stuff before closing
     //data_destroy(duped_value);
     //free(duped_key);
 
-    return get_status;
+     
 }
 
 struct data_t *tree_get(struct tree_t *tree, char *key){
@@ -70,11 +70,11 @@ struct tree_t* minValTree(struct tree_t* node){
     struct tree_t* current = node;
   
     /* loop down to find the leftmost leaf */
-    while (current && current->left != NULL)
+    while (current != NULL && current->left != NULL)
         current = current->left;
   
     return current;
-};
+}
 
 // int tree_del(struct tree_t *tree, char *key){
 //     //if the key to be deleted < root's key -> left subtree
@@ -120,16 +120,18 @@ struct tree_t* minValTree(struct tree_t* node){
 // }
 
 int tree_del(struct tree_t *tree, char *key){
-    if(tree == NULL || key == NULL)
+    struct data_t *temp = tree_get(tree, key);
+    if(tree == NULL || key == NULL || temp == NULL){
+        data_destroy(temp);
         return -1;
+    }
+    data_destroy(temp);
+    
     tree_del_recursive(tree, key);
+    
     return 0;
 }
 
-// tree vai ser inicialmente o filho direito ou esquerdo do toDelete
-// path sera o caminho a seguir conforme esse deleteChild(se deleteChild é o filho direito, 
-// teremos de ir pelo caminhho esquerdo da arvore path == 0, se deleteChild for o filho esquerdo, 
-// teremos de ir pelo caminho direito da arvore path == 1)
 
 struct tree_t *tree_del_recursive(struct tree_t *root, char *key){
     if(root == NULL)
@@ -146,20 +148,22 @@ struct tree_t *tree_del_recursive(struct tree_t *root, char *key){
         
         if(root->left == NULL){
             struct tree_t *temp = root->right;
+            entry_destroy(root->data);
             free(root);
             return temp;
         }
         else if(root->right == NULL){
             struct tree_t *temp = root->left;
+            entry_destroy(root->data);
             free(root);
             return temp;
         }
         
         struct tree_t *temp = minValTree(root->right);
 
-        root->data->key = temp->data->key;
+        entry_replace(root->data, strdup(temp->data->key), data_dup(temp->data->value));
 
-        root->right = tree_del_recursive(root->right, key);
+        root->right = tree_del_recursive(root->right, temp->data->key);
     }
 
     return root;

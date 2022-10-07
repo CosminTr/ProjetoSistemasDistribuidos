@@ -20,7 +20,6 @@ struct data_t *data_create2(int size, void *data) {//nota nao usar strcpy pois e
     if(size < 1 || data == NULL)
         return NULL;
     else{
-        //struct data_t *ret = data_create(size);
         struct data_t *ret;
         ret = (struct data_t*) malloc(sizeof(struct data_t));
         ret->datasize = size;
