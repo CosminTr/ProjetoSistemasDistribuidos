@@ -8,6 +8,8 @@
 #include "data.h"
 #include "entry.h"
 #include "tree.h"
+#include "serialization.h"
+
 
 /**************************************************************/
 int testTreeVazia() {
@@ -224,6 +226,15 @@ int testGetKeys() {
 		}
 		result = (result && achou);
 	}
+
+	// char **keys_buf;
+    // int resultadoFirstSerial = keyArray_to_buffer(keys, keys_buf);
+
+	// result = result && (resultadoFirstSerial==4);
+
+	void **values = tree_get_values(tree);
+	
+	tree_free_values(values);
 
 	result = result && (tree_size(tree) == i);
 

@@ -5,8 +5,7 @@
 #include <entry.h>
 
 struct entry_t *entry_create(char *key, struct data_t *data) {
-    struct entry_t *ret;
-    ret = malloc(sizeof(struct entry_t));
+    struct entry_t *ret = malloc(sizeof(struct entry_t));
     ret->key = key;
     ret->value = data;
     return ret;
@@ -41,7 +40,7 @@ int entry_compare(struct entry_t *entry1, struct entry_t *entry2) {
     int result = strcmp(entry1->key, entry2->key);
     if (result == 0)
         return result;
-    else if(result<0)
+    else if(result < 0)
         return -1;
     else
         return 1;
