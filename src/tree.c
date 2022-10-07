@@ -233,7 +233,7 @@ void tree_free_values(void **values) {
         free(values[index]);
         index +=1;
     }
-    //free(values);
+    free(values);
 }
 
 int tree_put_recursive(struct tree_t *tree, struct entry_t *entry) {
