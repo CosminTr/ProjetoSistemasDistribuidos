@@ -1,9 +1,6 @@
 #include "client_stub.h"
 #include "client_stub-private.h"
 #include "network_client.h"
-#include "stdio.h" 
-#include "stdlib.h"
-#include "string.h"
 
 struct rtree_t *tree_remota;
 
@@ -14,10 +11,11 @@ struct rtree_t *rtree_connect(const char *address_port) {
     char *host = strtok(address_port, del); // hostname    removed:
     int port = atoi(strtok(NULL, del));     // port      '<' ':' '>'
     
-    tree_remota->client_socket.sin_family = AF_INET;
-    tree_remota->client_socket.sin_port = htons(port);
+    tree_remota->server_socket.sin_family = AF_INET;
+    tree_remota->server_socket.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, host, &tree_remota->client_socket.sin_addr) < 1) {
+    //Nota: talvez fazer no network_client para dar close socket em caso de erro?
+    if (inet_pton(AF_INET, host, &tree_remota->server_socket.sin_addr) < 1) {
         printf("Erro ao converter IP\n");
         return NULL;
     }
