@@ -2,7 +2,6 @@
 #define _NETWORK_SERVER_H
 
 #include "tree_skel.h"
-#include "inet.h"
 
 /* Função para preparar uma socket de receção de pedidos de ligação
  * num determinado porto.

@@ -1,5 +1,9 @@
 #include "network_client.h"
 #include <errno.h>
+#include "client_stub-private.h" 
+#include "inet.h"
+#include "message_private.h"
+
 
 int network_connect(struct rtree_t *rtree){
     
@@ -9,17 +13,8 @@ int network_connect(struct rtree_t *rtree){
         return -1;
     }
 
-    //Preenche estrutura para o servidor na rtree para estabelecer conexão
-    /* Como ficaria a funcao inet de client_stub
-    if (inet_pton(AF_INET, rtree->hostname, rtree->server_socket.sin_addr) < 1) {
-        printf("Erro ao converter IP\n");
-        close(rtree->socket_num); // ou network_close(rtree->socket_num);?
-        return -1;
-    }
-    */
-
     //Estabelece conexao com o servidor
-    if(connect(rtree->socket_num,(struct sockaddr *)rtree->server_socket, sizeof(rtree->server_socket)) < 0){
+    if(connect(rtree->socket_num,(struct sockaddr *)&rtree->server_socket, sizeof(rtree->server_socket)) < 0){
         perror("Erro ao conetar ao servidor - Client");
         close(rtree->socket_num);
         return -1;
@@ -70,8 +65,8 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
     resp[resposta_len] = '\0';
 
     //CONFUSAO AQUI
-    message_t *mensagem = message_t__unpack(NULL, resposta_len, resp);
-    msg->message = *mensagem;
+    struct message_t *mensagem = message_t__unpack(NULL, resposta_len, resp);
+    msg->message = mensagem->message;
     return NULL;
 }
 

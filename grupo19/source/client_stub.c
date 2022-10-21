@@ -14,7 +14,6 @@ struct rtree_t *rtree_connect(const char *address_port) {
     tree_remota->server_socket.sin_family = AF_INET;
     tree_remota->server_socket.sin_port = htons(port);
 
-    //Nota: talvez fazer no network_client para dar close socket em caso de erro?
     if (inet_pton(AF_INET, host, &tree_remota->server_socket.sin_addr) < 1) {
         printf("Erro ao converter IP\n");
         return NULL;
