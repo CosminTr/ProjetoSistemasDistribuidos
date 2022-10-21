@@ -26,18 +26,19 @@ int network_connect(struct rtree_t *rtree){
 struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t *msg){
     int msglen = message_t__get_packed_size(&msg->message);
     int resposta_len;
-    uint8_t *buffer = malloc(msglen);
+    uint8_t *buffer = malloc(msglen); //podera ser char em vez de uint8_t?
     //send
     message_t__pack(&msg->message, buffer);
-    int netlong = htonl(msglen);
-    write(rtree->socket_num, &netlong, sizeof(int));
+    // int netlong = htonl(msglen);
+    // write(rtree->socket_num, &netlong, sizeof(int));
 
     int resultado;
 
     while (msglen > 0) {
-        int resultado = write(rtree->socket_num, buffer, msglen);
+        resultado = write(rtree->socket_num, buffer, msglen);
         if (resultado < 0) {
             //deu erro
+            return NULL;
 
         }
         msglen = msglen - resultado;
@@ -57,16 +58,16 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
         resultado = read(rtree->socket_num, resp + index, resposta_len - index);
         if (resultado < 1) {
             //erro
-
+            return NULL; //o que fazer em caso de resultado = 0?
         }
         index = index + resultado;
 
     }
     resp[resposta_len] = '\0';
 
-    //CONFUSAO AQUI
-    struct message_t *mensagem = message_t__unpack(NULL, resposta_len, resp);
-    msg->message = mensagem->message;
+    //CONFUSAO AQUI 
+    MessageT *temp = message_t__unpack(NULL, resposta_len, resp);
+    msg->message = *temp;
     return NULL;
 }
 
