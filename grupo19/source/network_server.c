@@ -54,7 +54,7 @@ struct message_t *network_receive(int client_socket) {
         return NULL;
     }
     msglen = ntohl(msglen);
-    uint8_t mensagem [msglen];
+    char *mensagem [msglen];
     read_all(client_socket, mensagem, msglen);
     MessageT *temp = message_t__unpack(NULL, msglen, mensagem);
     ret->message = *temp;

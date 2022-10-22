@@ -39,7 +39,7 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
     //receive
     read(rtree->socket_num, &resposta_len, sizeof(int));
     resposta_len = ntohl(resposta_len);
-    uint8_t resp[resposta_len];
+    char *resp[resposta_len];
     read_all(rtree->socket_num, resp, resposta_len);
     //CONFUSAO AQUI 
     MessageT *temp = message_t__unpack(NULL, resposta_len, resp);
