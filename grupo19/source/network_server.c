@@ -43,7 +43,7 @@ int network_server_init(short port) {
 }
 
 int network_main_loop(int listening_socket){
-    /aceita a conexão do client
+    //aceita a conexão do client
     int connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client);
     
     //entrega a mensagem que recebe do receive ao skel
@@ -56,7 +56,7 @@ int network_main_loop(int listening_socket){
         network_send(connsockfd, mss);
     }
 }
-//
+
 
 struct message_t *network_receive(int client_socket) {
     struct message_t *ret = create_message();
