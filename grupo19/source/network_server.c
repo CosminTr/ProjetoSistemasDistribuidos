@@ -64,7 +64,7 @@ struct message_t *network_receive(int client_socket) {
 int network_send(int client_socket, struct message_t *msg) {
     int msglen = message_t__get_packed_size(&msg->message);
     int netlong = htonl(msglen);
-    uint8_t *buffer = malloc(msglen);
+    char *buffer = malloc(msglen);
     
     message_t__pack(&msg->message, buffer);
 
@@ -79,7 +79,7 @@ int network_server_close(){
     close(sockfd);
     return 0;
 }
-int write_all(int socket_num, uint8_t *buffer, int len) {
+int write_all(int socket_num, char *buffer, int len) {
     int ret = len;
     while (len > 0) {
         int resultado = write(socket_num, buffer, len);
@@ -94,7 +94,7 @@ int write_all(int socket_num, uint8_t *buffer, int len) {
     return ret;
 }
 
-int read_all(int socket_num, uint8_t *buffer, int len) {
+int read_all(int socket_num, char *buffer, int len) {
     int index = 0;
     int resultado;
     while (index < len) {

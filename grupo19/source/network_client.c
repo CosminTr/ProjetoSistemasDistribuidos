@@ -27,7 +27,7 @@ int network_connect(struct rtree_t *rtree){
 struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t *msg){
     int msglen = message_t__get_packed_size(&msg->message);
     int resposta_len;
-    uint8_t *buffer = malloc(msglen); //podera ser char em vez de uint8_t?
+    char *buffer = malloc(msglen); 
     //send
     message_t__pack(&msg->message, buffer);
     int netlong = htonl(msglen);
