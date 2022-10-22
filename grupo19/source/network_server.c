@@ -43,7 +43,20 @@ int network_server_init(short port) {
 }
 //FALTA ISTO
 //
-int network_main_loop(int listening_socket);
+int network_main_loop(int listening_socket){
+    /aceita a conexão do client
+    int connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client);
+    
+    //entrega a mensagem que recebe do receive ao skel
+    if (tree_skel_init() == -1){
+        perror("Erro a iniciar a skeleton");
+    }else if (tree_skel_init() == 0){
+        struct message_t *mss = network_receive(connsockfd);
+        invoke(mss);
+        //envia a mensagem ao cliente
+        network_send(connsockfd, mss);
+    }
+}
 //
 
 struct message_t *network_receive(int client_socket) {
