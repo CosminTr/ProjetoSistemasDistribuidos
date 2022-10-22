@@ -41,8 +41,7 @@ int network_server_init(short port) {
     }
     return sockfd;
 }
-//FALTA ISTO
-//
+
 int network_main_loop(int listening_socket){
     /aceita a conexão do client
     int connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client);
