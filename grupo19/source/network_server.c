@@ -99,8 +99,7 @@ int read_all(int socket_num, char *buffer, int len) {
     int resultado;
     while (index < len) {
         resultado = read(socket_num, buffer + index, len - index);
-        //not sure about this
-        if(resultado == 0) {
+        if(resultado == 0) { //EOF
             return 0;
         }
         if (resultado < 1) {
