@@ -13,7 +13,15 @@ int network_connect(struct rtree_t *rtree){
         perror("Erro ao criar socket TCP - Cliente");
         return -1;
     }
-
+    //UNSURE ABOUT THIS BIT
+    rtree->server_socket.sin_family = AF_INET;
+    rtree->server_socket.sin_port = htons(atoi(rtree->socket_num));
+    if(inet_pton(AF_INET, &rtree->server_socket, &rtree->server_socket.sin_addr) < 1) {
+        printf("Erro ao converter IP\n");
+        close(rtree->socket_num);
+        return -1;
+    }
+    //
     //Estabelece conexao com o servidor
     if(connect(rtree->socket_num,(struct sockaddr *)&rtree->server_socket, sizeof(rtree->server_socket)) < 0){
         perror("Erro ao conetar ao servidor - Client");
