@@ -1,7 +1,13 @@
 #include "message_private.h"
 
 struct message_t *message_create(){
-    return NULL;
+    struct message_t *msg = (struct message_t *) malloc(sizeof(struct message_t));
+    message_t__init(&msg->message);
+    if(msg == NULL){
+        return NULL;
+    }
+
+    return msg;
 }
 
 int write_all(int socket_num, char *buffer, int len) {

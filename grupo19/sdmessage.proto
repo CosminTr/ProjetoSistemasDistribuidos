@@ -1,6 +1,9 @@
 syntax = "proto3";
 message message_t
  {
+	int32 result = 1;
+	entry_t entry = 2;
+	
         enum Opcode {
                 OP_BAD     	= 0;
                 OP_SIZE    	= 10;
@@ -12,7 +15,7 @@ message message_t
                 OP_GETVALUES	= 70;
                 OP_ERROR   	= 99;
         }
-        Opcode opcode = 1;
+        Opcode opcode = 3;
 
         enum C_type {
                 CT_BAD    	= 0;
@@ -24,8 +27,19 @@ message message_t
                 CT_RESULT 	= 60;
                 CT_NONE   	= 70;
         }
-        C_type c_type = 2;
+        C_type c_type = 4;
 
-        bytes data = 3;
+	bytes data = 5;
+}
 
-};
+message entry_t{
+
+	string key = 1;
+	data_t data = 2;
+}
+
+message data_t{
+	
+	int32 datasize = 1;
+	string data = 2;
+}
