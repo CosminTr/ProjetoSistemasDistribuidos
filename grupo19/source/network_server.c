@@ -84,8 +84,8 @@ int write_all(int socket_num, uint8_t *buffer, int len) {
     while (len > 0) {
         int resultado = write(socket_num, buffer, len);
         if (resultado < 0) {
-            //deu erro ou acabou
-            return NULL;
+            perror("Erro na escrita, write_all \n");
+            return resultado;
 
         }
         len = len - resultado;
@@ -99,8 +99,13 @@ int read_all(int socket_num, uint8_t *buffer, int len) {
     int resultado;
     while (index < len) {
         resultado = read(socket_num, buffer + index, len - index);
+        //not sure about this
+        if(resultado == 0) {
+            return 0;
+        }
         if (resultado < 1) {
-            return NULL;
+            perror("Erro na leitura, read_all \n");
+            return resultado;
         }
         index = index + resultado;
 
