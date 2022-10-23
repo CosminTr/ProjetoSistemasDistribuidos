@@ -2,8 +2,9 @@
 #include "inet.h"
 #include "message_private.h"
 
-struct sockaddr_in server;
-int sockfd;
+struct sockaddr_in server, client;
+int sockfd, connsockfd;
+socklen_t size_client;
 
 int network_server_init(short port) {
 //    int sockfd; ?
