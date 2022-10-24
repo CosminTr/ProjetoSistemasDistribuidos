@@ -26,18 +26,16 @@ int invoke(struct message_t *msg) {
         case MESSAGE_T__OPCODE__OP_SIZE://falta so ver os erros
             msg->message.opcode = MESSAGE_T__OPCODE__OP_SIZE + 1;
             msg->message.c_type = MESSAGE_T__C_TYPE__CT_RESULT;
-            // vvvvvvvvvvvvvvvvvvvvvvvv
-            //int size = tree_size(rtree);
-            //msg->message.result = size;
-            // IS THIS RIGHT? ^ yes
+            int size = tree_size(rtree);//merge with line below
+            msg->message.result = size;
             return 0;
             break;
 
         case MESSAGE_T__OPCODE__OP_HEIGHT: //falta ver os erros
             msg->message.opcode = MESSAGE_T__OPCODE__OP_HEIGHT + 1;
             msg->message.c_type = MESSAGE_T__C_TYPE__CT_RESULT;
-            //int height = tree_height(rtree);
-            //msg->message.result = height;
+            int height = tree_height(rtree);//merge with line below
+            msg->message.result = height;
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
@@ -78,28 +76,26 @@ int invoke(struct message_t *msg) {
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS:
             char** keys = tree_get_keys(rtree);
-            char** keys_buf;
-            if(keyArray_to_buffer(keys, keys_buf) == -1){//potencial problema de memoria por nao dar free 
+            if(keys == NULL){//potencial problema de memoria por nao dar free 
                 msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
                 msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
             msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
             msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEYS;
-            msg->message.data = keys_buf;
+            msg->message.data = keys;
             return 0; 
             break;
         case MESSAGE_T__OPCODE__OP_GETVALUES://Verificar quao bem funciona este keyArray_to_buf com values
-            char** values = tree_get_values(rtree);
-            char** values_buf;
-            if(keyArray_to_buffer(values, values_buf) == -1){//potencial problema de memoria por nao dar free 
+            void** values = tree_get_values(rtree);
+            if(values == NULL){//potencial problema de memoria por nao dar free 
                 msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
                 msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
             msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
             msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEYS;
-            msg->message.data = values_buf;
+            msg->message.data = values; //potencial erro--- meter void** em repeated string data(talvez fazer um repeated bytes data e dar um cast )
             return 0; 
             break;
         default:
