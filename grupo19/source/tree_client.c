@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
             else if (strcmp(pedido, "size") == 0){
                 int tam = rtree_size(tree);
                 if(tam == -1) {
-                    printf("Erro na obtenção do tamanho da arvore \n")
+                    printf("Erro na obtenção do tamanho da arvore \n");
                 }
                 else {
                     printf("O tamanho da arvore é: %d \n", tam);
