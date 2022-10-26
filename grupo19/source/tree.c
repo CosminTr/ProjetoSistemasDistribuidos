@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <tree.h>
-#include <tree-private.h>
-#include <entry.h>
-#include <data.h>
+#include "tree.h"
+#include "tree-private.h"
+#include "entry.h"
+#include "data.h"
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
