@@ -4,6 +4,12 @@
 #include "message_private.h"
 #include "serialization.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct tree_t *rtree;
 
 int tree_skel_init() {

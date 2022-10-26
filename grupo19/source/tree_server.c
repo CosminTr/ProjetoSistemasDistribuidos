@@ -1,9 +1,15 @@
 #include "network_server.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 int main(int argc, char * argv[]){
 
     if (argc != 2){
-        printf("Input errado!\n Deverá introduzir ./server <server_port>");
+        printf("Input errado!\n Deve introduzir: ./server <server_port>");
         return -1;
     }
 

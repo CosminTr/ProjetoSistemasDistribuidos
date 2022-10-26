@@ -1,5 +1,11 @@
 #include "message_private.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct message_t *message_create(){
     struct message_t *msg = (struct message_t *) malloc(sizeof(struct message_t));
     message_t__init(&msg->message);

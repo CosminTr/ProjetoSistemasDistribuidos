@@ -2,12 +2,17 @@
 #include "inet.h"
 #include "message_private.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct sockaddr_in server, client;
 int sockfd, connsockfd;
 socklen_t size_client;
 
 int network_server_init(short port) {
-//    int sockfd; ?
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("Erro ao criar socket");
         return -1;

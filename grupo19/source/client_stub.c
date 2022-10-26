@@ -3,6 +3,12 @@
 #include "network_client.h"
 #include "message_private.h"
 
+/*Trabalho realizado por 
+    Cosmin Trandafir fc57101
+    Beatriz Silva fc52911
+    João Serafim fc56376
+*/
+
 struct rtree_t *tree_remota;
 
 struct rtree_t *rtree_connect(const char *address_port) {
