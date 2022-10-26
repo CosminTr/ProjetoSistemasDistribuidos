@@ -51,6 +51,7 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
     msg->message = *temp;
 
     if (msg->message.opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        message_t__free_unpacked(&msg->message, NULL); //????
         return NULL;
     }
     

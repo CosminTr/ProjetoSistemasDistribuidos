@@ -56,7 +56,7 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     data_t__init(msg->message.entry->data);
 
     if(msg->message.entry->data == NULL){
-        entry_t__free_unpacked(&msg->message.entry, NULL);
+        entry_t__free_unpacked(&msg->message.entry, NULL);//necessario?
         message_t__free_unpacked(&msg->message, NULL);
         return -1;
     }
@@ -68,9 +68,15 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     msg->message.opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
 
-    network_send_receive(rtree, msg);
-    
-    return 0;
+    msg = network_send_receive(rtree, msg);
+    //Verificar se deu td correto
+    if(msg == NULL)
+        return -1;
+    else{
+        message_t__free_unpacked(&msg->message, NULL);
+        return 0;
+    }
+        
 }
 
 struct data_t *rtree_get(struct rtree_t *rtree, char *key){
@@ -90,49 +96,79 @@ struct data_t *rtree_get(struct rtree_t *rtree, char *key){
     msg->message.opcode = MESSAGE_T__OPCODE__OP_GET;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
-    network_send_receive(rtree, msg);
+    msg = network_send_receive(rtree, msg);
+
+    if(msg == NULL)
+        return NULL;
+    else{
+        struct data_t *data = data_dup(msg->message.entry->data);
+        return data;
+    }
+
 }
 
 int rtree_del(struct rtree_t *rtree, char *key){
     struct message_t *msg = message_create();
     if(msg == NULL)
-        return NULL;
+        return -1;
 
     msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
     entry_t__init(msg->message.entry);
     
     if(msg->message.entry == NULL){
         message_t__free_unpacked(&msg->message, NULL);
-        return NULL;
+        return -1;
     }
 
     msg->message.entry->key = key;
     msg->message.opcode = MESSAGE_T__OPCODE__OP_DEL;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
-    network_send_receive(rtree, msg);
+    msg = network_send_receive(rtree, msg);
+    if(msg == NULL)
+        return -1;
+    else {
+        message_t__free_unpacked(&msg->message, NULL);
+        return 0;
+    }
+        
 }
 
 int rtree_size(struct rtree_t *rtree){
     struct message_t *msg = message_create();
     if(msg == NULL)
-        return NULL;
+        return -1;
 
     msg->message.opcode = MESSAGE_T__OPCODE__OP_SIZE;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    network_send_receive(rtree, msg);
+    msg = network_send_receive(rtree, msg);
+    if(msg == NULL)
+        return -1;
+    else{
+        int size = msg->message.result;
+        message_t__free_unpacked(&msg->message, NULL);
+        return size;
+    } 
+        
 }
 
 int rtree_height(struct rtree_t *rtree){
     struct message_t *msg = message_create();
     if(msg == NULL)
-        return NULL;
+        return -1;
 
     msg->message.opcode = MESSAGE_T__OPCODE__OP_HEIGHT;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    network_send_receive(rtree, msg);
+    msg = network_send_receive(rtree, msg);
+    if(msg == NULL)
+        return -1;
+    else{
+        int height = msg->message.result;
+        message_t__free_unpacked(&msg->message, NULL);
+        return height;
+    } 
 }
 
 char **rtree_get_keys(struct rtree_t *rtree){
@@ -143,7 +179,14 @@ char **rtree_get_keys(struct rtree_t *rtree){
     msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    network_send_receive(rtree, msg);    
+    msg = network_send_receive(rtree, msg);   
+    if(msg == NULL)
+        return NULL;
+    else{
+        char **keys = msg->message.data;
+        message_t__free_unpacked(&msg->message, NULL);
+        return keys;
+    } 
 }
 
 void **rtree_get_values(struct rtree_t *rtree){
@@ -154,5 +197,12 @@ void **rtree_get_values(struct rtree_t *rtree){
     msg->message.opcode = MESSAGE_T__OPCODE__OP_GETVALUES;
     msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    network_send_receive(rtree, msg); 
+    msg = network_send_receive(rtree, msg); 
+    if(msg == NULL)
+        return NULL;
+    else{
+        void **values = (void *)msg->message.data;
+        message_t__free_unpacked(&msg->message, NULL);
+        return values;
+    } 
 }
