@@ -1,6 +1,5 @@
 #include "network_server.h"
 #include "inet.h"
-#include "message_private.h"
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -50,39 +49,60 @@ int network_server_init(short port) {
 
 int network_main_loop(int listening_socket){
     //aceita a conexão do client
-    int connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client);
-    
-    //entrega a mensagem que recebe do receive ao skel
-    if (tree_skel_init() == -1){
-        perror("Erro a iniciar a skeleton");
-    }else if (tree_skel_init() == 0){
-        struct message_t *mss = network_receive(connsockfd);
-        invoke(mss);
-        //envia a mensagem ao cliente
-        network_send(connsockfd, mss);
+    while((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
+        printf("Cliente Conetou-se");
+
+        int client_running = 1;
+        while (client_running == 1){
+            struct message_t *mss = network_receive(connsockfd);
+
+            //client da quit
+            if(mss == NULL){
+                printf("Cliente Desconetou-se");
+                client_running = 0;
+                close(connsockfd);
+                continue;
+            }
+            
+            if(invoke(mss) == -1){
+                printf("Ocorreu um erro ao executar o pedido");
+                continue;
+            }
+            
+            //envia a mensagem ao cliente
+            if(network_send(connsockfd, mss) == -1){
+                close(connsockfd);
+                return -1;
+            }
+        }
     }
+    return 0;
 }
 
 
 struct message_t *network_receive(int client_socket) {
-    struct message_t *ret = create_message();
+    struct message_t *ret = message_create();
     int msglen;
     int res;
     if ((res = read(client_socket, &msglen, sizeof(int))) == 0) {
         return NULL;
     }
     msglen = ntohl(msglen);
-    char *mensagem [msglen];
+    uint8_t mensagem [msglen];
+
     read_all(client_socket, mensagem, msglen);
+    mensagem[msglen] = '\0';
+
     MessageT *temp = message_t__unpack(NULL, msglen, mensagem);
     ret->message = *temp;
+
     return ret;
 }
 
 int network_send(int client_socket, struct message_t *msg) {
     int msglen = message_t__get_packed_size(&msg->message);
     int netlong = htonl(msglen);
-    char *buffer = malloc(msglen);
+    uint8_t *buffer = malloc(msglen);
     
     message_t__pack(&msg->message, buffer);
 

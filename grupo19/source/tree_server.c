@@ -1,5 +1,5 @@
 #include "network_server.h"
-#include <stdio.h>
+#include "inet.h"
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -10,10 +10,10 @@
 int main(int argc, char * argv[]){
 
     if (argc != 2){
-        printf("Input errado!\n Deve introduzir: ./server <server_port>");
+        printf("Input errado!\n Deve introduzir: ./tree-server <server_port>");
         return -1;
     }
-
+    printf("Server Iniciado");
     int server_socket = network_server_init(atoi(argv[1]));
     network_main_loop(server_socket);
     network_server_close();

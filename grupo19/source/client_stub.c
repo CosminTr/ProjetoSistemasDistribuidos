@@ -14,9 +14,8 @@ struct rtree_t *tree_remota;
 struct rtree_t *rtree_connect(const char *address_port) {
     tree_remota = malloc (sizeof(struct rtree_t));
 
-    char del[] = "<:>";
-    char *host = strtok(address_port, del); // hostname    removed:
-    int port = atoi(strtok(NULL, del));     // port      '<' ':' '>'
+    char *host = strtok((char *)address_port, ":"); // hostname    removed:
+    int port = atoi(strtok(NULL, ":"));     // port      '<' ':' '>'
     
     tree_remota->server_socket.sin_family = AF_INET;
     tree_remota->server_socket.sin_port = htons(port);
@@ -28,14 +27,15 @@ struct rtree_t *rtree_connect(const char *address_port) {
     if (network_connect(tree_remota) == -1) { //ERRO
         return NULL;
     }
-
+    printf("Client Connected\n");
     return(tree_remota);
 }
 int rtree_disconnect(struct rtree_t *rtree) {
-    int retorna = 0;
     if (network_close(rtree) != 0)
-        retorna = -1;
-    return retorna;
+        return -1;
+    
+    free(tree_remota);
+    return 0;
 }
 
 int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
@@ -44,7 +44,7 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
         return -1;
 
     msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
-    entry_t__init(&msg->message.entry);
+    entry_t__init(msg->message.entry);
 
     if(msg->message.entry == NULL){
         //dar free ao message caso entry deu mau malloc
@@ -56,7 +56,7 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     data_t__init(msg->message.entry->data);
 
     if(msg->message.entry->data == NULL){
-        entry_t__free_unpacked(&msg->message.entry, NULL);//necessario?
+        entry_t__free_unpacked(msg->message.entry, NULL);//necessario?
         message_t__free_unpacked(&msg->message, NULL);
         return -1;
     }
@@ -81,11 +81,15 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
 
 struct data_t *rtree_get(struct rtree_t *rtree, char *key){
     struct message_t *msg = message_create();
-    if(msg == NULL)
+    if(msg == NULL){
+        message_t__free_unpacked(&msg->message, NULL);
         return NULL;
+    }
 
     msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
     entry_t__init(msg->message.entry);
+    msg->message.entry->data = (DataT *) malloc(sizeof(DataT));
+    data_t__init(msg->message.entry->data);
     
     if(msg->message.entry == NULL){
         message_t__free_unpacked(&msg->message, NULL);
@@ -100,10 +104,13 @@ struct data_t *rtree_get(struct rtree_t *rtree, char *key){
 
     if(msg == NULL)
         return NULL;
-    else{
-        struct data_t *data = data_dup(msg->message.entry->data);
-        return data;
-    }
+
+    int data_len = msg->message.entry->data->datasize;
+    struct data_t *data = data_create(data_len);
+    memcpy(data->data, msg->message.entry->data->data, data_len);
+    
+    message_t__free_unpacked(&msg->message, NULL);
+    return data;
 
 }
 
@@ -183,8 +190,7 @@ char **rtree_get_keys(struct rtree_t *rtree){
     if(msg == NULL)
         return NULL;
     else{
-        char **keys = msg->message.data;
-        message_t__free_unpacked(&msg->message, NULL);
+        char **keys = msg->message.keys;
         return keys;
     } 
 }
@@ -201,8 +207,7 @@ void **rtree_get_values(struct rtree_t *rtree){
     if(msg == NULL)
         return NULL;
     else{
-        void **values = (void *)msg->message.data;
-        message_t__free_unpacked(&msg->message, NULL);
+        void **values = (void **)msg->message.values;
         return values;
     } 
 }

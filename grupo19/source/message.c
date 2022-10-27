@@ -16,7 +16,7 @@ struct message_t *message_create(){
     return msg;
 }
 
-int write_all(int socket_num, char *buffer, int len) {
+int write_all(int socket_num, uint8_t *buffer, int len) {
     int ret = len;
     while (len > 0) {
         int resultado = write(socket_num, buffer, len);
@@ -25,13 +25,13 @@ int write_all(int socket_num, char *buffer, int len) {
             return resultado;
 
         }
-        len = len - resultado;
-        buffer = buffer + resultado;
+        len -= resultado;
+        buffer += resultado;
     }
     return ret;
 }
 
-int read_all(int socket_num, char *buffer, int len) {
+int read_all(int socket_num, uint8_t *buffer, int len) {
     int index = 0;
     int resultado;
     while (index < len) {
@@ -43,7 +43,7 @@ int read_all(int socket_num, char *buffer, int len) {
             perror("Erro na leitura, read_all \n");
             return resultado;
         }
-        index = index + resultado;
+        index += resultado;
 
     }
     buffer[len] = '\0';

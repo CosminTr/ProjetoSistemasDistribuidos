@@ -109,7 +109,7 @@ int tree_del(struct tree_t *tree, char *key){
     }
     data_destroy(temp);
     
-    tree_del_recursive(tree, key);
+    tree = tree_del_recursive(tree, key);
     
     return 0;
 }
@@ -232,7 +232,8 @@ void get_values_recursive(struct tree_t *tree, int *positionCounter, void **valu
     }
     else{
         get_values_recursive(tree->left, positionCounter, value_list); 
-        value_list[*positionCounter] = data_dup(tree->data->value);
+        struct data_t *temp = data_dup(tree->data->value);
+        value_list[*positionCounter] = temp->data;
         *positionCounter += 1;
         get_values_recursive(tree->right, positionCounter, value_list);
         return;

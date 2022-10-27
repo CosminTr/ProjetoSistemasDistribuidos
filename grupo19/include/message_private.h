@@ -7,6 +7,6 @@ struct message_t{
 
 struct message_t *message_create();
 
-int write_all(int socket_num, char *buffer, int len);
+int write_all(int socket_num, uint8_t *buffer, int len);
 
-int read_all(int socket_num, char *buffer, int len);
+int read_all(int socket_num, uint8_t *buffer, int len);

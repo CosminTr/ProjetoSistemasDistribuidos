@@ -30,8 +30,8 @@ int network_connect(struct rtree_t *rtree){
 
 struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t *msg){
     int msglen = message_t__get_packed_size(&msg->message);
-    int resposta_len;
-    char *buffer = malloc(msglen); 
+    int resposta_len ;
+    uint8_t *buffer = malloc(msglen); //mudar? uint8_t *buffer[msglen]; nao pq e pointer
     
     //send
     message_t__pack(&msg->message, buffer);
@@ -44,8 +44,10 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
     //receive
     read(rtree->socket_num, &resposta_len, sizeof(int));
     resposta_len = ntohl(resposta_len);
-    char *resp[resposta_len];
+    uint8_t resp[resposta_len];
     read_all(rtree->socket_num, resp, resposta_len);
+
+    resp[resposta_len] = '\0';
     
     MessageT *temp = message_t__unpack(NULL, resposta_len, resp);
     msg->message = *temp;
@@ -60,6 +62,6 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
 }
 
 int network_close(struct rtree_t * rtree){
-    close(rtree->socket_num);
-    return 0;
+    
+    return close(rtree->socket_num);
 }

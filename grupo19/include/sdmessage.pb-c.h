@@ -55,12 +55,20 @@ struct  _MessageT
   EntryT *entry;
   MessageT__Opcode opcode;
   MessageT__CType c_type;
-  size_t n_data;
-  char **data;
+  /*
+   *[packed = true]?
+   */
+  size_t n_keys;
+  char **keys;
+  /*
+   *[packed = true]?
+   */
+  size_t n_values;
+  char **values;
 };
 #define MESSAGE_T__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&message_t__descriptor) \
-    , 0, NULL, MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0,NULL }
+    , 0, NULL, MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0,NULL, 0,NULL }
 
 
 struct  _EntryT

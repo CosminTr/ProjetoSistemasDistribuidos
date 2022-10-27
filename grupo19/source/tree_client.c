@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+#include "inet.h"
 #include "client_stub.h"
 
 /*Trabalho realizado por 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     struct rtree_t *tree;
 
     if (argc != 2){
-        printf("Input errado!\n Deve introduzir: ./client <server>:<port>");
+        printf("Input errado!\n Deve introduzir: ./client <server>:<port>\n");
         return -1;
     }
 
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 
     char* pedido;
     int maxSize = 128; //ALTERAR caso haja standard ou nao ig?
-    char* input[maxSize];
+    char input[maxSize];
     if(tree != NULL) {
         int running = 1;
         while (running) {
@@ -30,26 +30,25 @@ int main(int argc, char *argv[]) {
 
             if(strcmp(pedido, "put") == 0) {
                 char* temp = strtok(NULL, " "); //key input
-                char* key = malloc(sizeof(temp)+1);  //fazer malloc +1 para \n?
+                char* key = malloc(strlen(temp)+1);  //fazer malloc +1 para \n?
                 strcpy(key, temp);
                 
                 temp = strtok(NULL, "\n");//data input
-                void* data_temp = malloc(sizeof(temp)+1);
-                memcpy(data_temp, temp, sizeof(temp));
-                struct data_t *data = data_create2(sizeof(temp)+1, data_temp);
+                struct data_t *data = data_create(strlen(temp)+1);
+                memcpy(data->data, temp, strlen(temp)+1);
                 struct entry_t *entry = entry_create(key, data);
                 if(rtree_put(tree, entry) == -1)
-                    printf("Ocorreu um erro!");
+                    printf("Ocorreu um erro!\n");
                 else
-                    printf("Dados inseridos com sucesso");
+                    printf("Dados inseridos com sucesso\n");
                 
                 data_destroy(data);
-                entry_destroy(entry);
+                //entry_destroy(entry);
                 free(key);
-                free(data_temp);
+                //free(data_temp);
             }
             else if (strcmp(pedido, "get") == 0) {
-                char *temp = strtok(NULL, " ");
+                char *temp = strtok(NULL, " \n");
                 char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
 
@@ -57,13 +56,13 @@ int main(int argc, char *argv[]) {
                 if (data == NULL)  //ERRO
                     printf("Não foi possivel get com a chave %s \n", key);
                 else 
-                    printf("Data com tamanho: %d, obtida \n", data->datasize);
+                    printf("Data com tamanho: %d e mensagem %s, obtida \n", data->datasize, (char *)data->data);
 
                 free(key);
 
             }
             else if (strcmp(pedido, "del") == 0){
-                char *temp = strtok(NULL, " ");
+                char *temp = strtok(NULL, " \n");
                 char *key = malloc(strlen(temp));
                 strcpy(key, temp);
                 if (rtree_del(tree, key) == -1) //deu erro
@@ -102,14 +101,14 @@ int main(int argc, char *argv[]) {
                 }
             }
             else if (strcmp(pedido, "getvalues") == 0) {
-                char **values = rtree_get_values(tree);
+                void **values = rtree_get_values(tree);
                 if (values == NULL) {
                     printf("Erro ao obter os valores \n");
                 }
                 else {
                     for(int i = 0; values[i] != NULL; i++) {
                        // if (keys[i] != NULL) {
-                            printf("Valor: %s \n", values[i]);
+                            printf("Valor: %s \n", (char*)values[i]);
                        // }
                     }
                 }
@@ -117,7 +116,7 @@ int main(int argc, char *argv[]) {
             else if (strcmp(pedido, "quit") == 0){
                 rtree_disconnect(tree);
                 running = 0;
-                printf("Conexão terminada");         
+                printf("Conexão terminada\n");         
             }
         }
     }

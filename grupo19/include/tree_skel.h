@@ -3,6 +3,7 @@
 
 #include "sdmessage.pb-c.h"
 #include "tree.h"
+#include "message_private.h"
 
 /* Inicia o skeleton da árvore.
  * O main() do servidor deve chamar esta função antes de poder usar a
