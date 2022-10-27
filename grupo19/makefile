@@ -36,7 +36,7 @@ all: tree-server tree-client client-lib.o
 
 
 client-lib.o: $(client-lib)
-	ld -r $(addprefix $(OBJ_DIR)/,$(OBJ) -o lib/$@
+	ld -r $(addprefix $(OBJ_DIR)/,$) -o lib/$@
 
 tree-client: $(tree-client)
 	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -o $(BIN_DIR)/$@
