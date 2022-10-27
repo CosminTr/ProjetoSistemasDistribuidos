@@ -6,8 +6,8 @@ OBJ_DIR = object
 LIB_DIR = lib
 
 
-TESTS = test_data.o test_entry.o test_tree.o
-CFLAGS = -g -Wall -I  #${INC_DIR}
+
+CFLAGS = -g -Wall -I  
 LDFLAGS = /usr/lib/x86_64-linux-gnu/libprotobuf-c.a
 COMPILE  = $(CC) $(CFLAGS) $(INC_DIR) -o $(OBJ_DIR)/$@ -c $<
 
@@ -18,8 +18,6 @@ tree-server = data.o entry.o message.o network_server.o sdmessage.pb-c.o tree_sk
 
 OBJ = client-lib.o tree-server.o tree-client.o 
 
-vpath %.o $(OBJ_DIR) $(TESTS)
-
 
 all: tree-server tree-client client-lib.o 
 
@@ -27,7 +25,7 @@ all: tree-server tree-client client-lib.o
 	$(COMPILE)
 	
 %.pb-c.c:%.proto
-	${PROTOC_DIR}bin/protoc-c sdmessage.proto --c_out=./
+	/usr/bin/protoc-c sdmessage.proto --c_out=./
 
 
 client-lib.o: $(client-lib)
@@ -40,26 +38,10 @@ tree-server: $(tree-server)
 	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -o  $(BIN_DIR)/$@
 
 
-
-test_data: $(OBJ) $(TESTS)
-	$(CC) $(addprefix $(OBJ_DIR)/,$(OBJ)) $(OBJ_DIR)/test_data.o -g -o $(BIN_DIR)/test_data
-
-test_entry: $(OBJ) $(TESTS)
-	$(CC) $(addprefix $(OBJ_DIR)/,$(OBJ)) $(OBJ_DIR)/test_entry.o -g -o $(BIN_DIR)/test_entry
-
-test_tree: $(OBJ) $(TESTS)
-	$(CC) $(addprefix $(OBJ_DIR)/,$(OBJ)) $(OBJ_DIR)/test_tree.o -g -o $(BIN_DIR)/test_tree
-
-
-
 -include $(OBJS:.o=.d)
 
 clean: 
 	rm -f $(addprefix $(OBJ_DIR)/,$(OBJ))
-	rm -f $(addprefix $(OBJ_DIR)/,$(TESTS))
 	rm -f $(BIN_DIR)/*
 	rm -f $(LIB_DIR)/*
-	rm -f $(BIN_DIR)/test_data
-	rm -f $(BIN_DIR)/test_entry
-	rm -f $(BIN_DIR)/test_tree
-	rm -f $(OBJ) *~ *.d *.o $(TARGET) *pb-c.[ch]
+	
