@@ -3,6 +3,7 @@ SRC_DIR = source
 INC_DIR = include
 BIN_DIR = binary
 OBJ_DIR = object
+LIB_DIR = lib
 PROTOC_DIR=/usr/
 
 TESTS = test_data.o test_entry.o test_tree.o
@@ -36,7 +37,7 @@ all: tree-server tree-client client-lib.o
 
 
 client-lib.o: $(client-lib)
-	ld -r $(addprefix $(OBJ_DIR)/,$) -o lib/$@
+	ld -r $(addprefix $(OBJ_DIR)/,$^) -o $(LIB_DIR)/$@
 
 tree-client: $(tree-client)
 	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -o $(BIN_DIR)/$@
