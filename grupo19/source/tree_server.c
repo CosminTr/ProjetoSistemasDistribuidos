@@ -1,4 +1,5 @@
 #include "network_server.h"
+#include <stdio.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
