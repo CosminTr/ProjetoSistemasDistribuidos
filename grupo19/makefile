@@ -4,8 +4,8 @@ INC_DIR = include
 BIN_DIR = binary
 OBJ_DIR = object
 LIB_DIR = lib
-CFLAGS = -g -Wall -I $(INC_DIR)
-COMPILE  = $(CC) $(CFLAGS)-o $(OBJ_DIR)/$@ -c $<
+CFLAGS = -g -Wall -I 
+COMPILE  = $(CC) $(CFLAGS) $(INC_DIR) -o $(OBJ_DIR)/$@ -c $<
 
 
 client-lib = client_stub.o network_client.o data.o entry.o message.o sdmessage.pb-c.o
@@ -20,8 +20,8 @@ all: client-lib.o tree-client tree-server
 %.o: $(SRC_DIR)/%.c 
 	$(COMPILE)
 	
-%.pb-c.c:%.proto
-	/usr/bin/protoc-c sdmessage.proto --c_out=./
+#%.pb-c.c:%.proto
+#	/usr/bin/protoc-c sdmessage.proto --c_out=./
 
 
 client-lib.o: $(client-lib)
