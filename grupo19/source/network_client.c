@@ -46,11 +46,8 @@ struct message_t *network_send_receive(struct rtree_t * rtree, struct message_t 
     resposta_len = ntohl(resposta_len);
     uint8_t resp[resposta_len];
     read_all(rtree->socket_num, resp, resposta_len);
-
-    resp[resposta_len] = '\0';
     
-    MessageT *temp = message_t__unpack(NULL, resposta_len, resp);
-    msg->message = *temp;
+    msg->message = *message_t__unpack(NULL, resposta_len, resp);
 
     if (msg->message.opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         message_t__free_unpacked(&msg->message, NULL); //????

@@ -42,10 +42,7 @@ int main(int argc, char *argv[]) {
                 else
                     printf("Dados inseridos com sucesso\n");
                 
-                data_destroy(data);
-                //entry_destroy(entry);
-                free(key);
-                //free(data_temp);
+                entry_destroy(entry);
             }
             else if (strcmp(pedido, "get") == 0) {
                 char *temp = strtok(NULL, " \n");

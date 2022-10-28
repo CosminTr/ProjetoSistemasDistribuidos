@@ -24,12 +24,12 @@ int network_server_init(short port) {
     signal(SIGINT, close_free);
     
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-        perror("Erro ao criar socket");
+        perror("Erro ao criar socket\n");
         return -1;
     }
     int um = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &um, sizeof(um)) < 0) {
-        perror("Erro em setsockopt, network_server_init");
+        perror("Erro em setsockopt, network_server_init\n");
         close(sockfd);
         return -1;
     }
@@ -45,13 +45,13 @@ int network_server_init(short port) {
     }
 
     if (bind(sockfd, (struct sockaddr *) &server, sizeof(server)) < 0){
-        perror("Erro ao fazer bind");
+        perror("Erro ao fazer bind\n");
         close(sockfd);
         return -1;
     }
 
     if (listen(sockfd, 0) < 0){
-        perror("Erro ao executar listen");
+        perror("Erro ao executar listen\n");
         close(sockfd);
         return -1;
     }
@@ -65,7 +65,7 @@ int network_main_loop(int listening_socket){
     signal(SIGINT, close_free);
     //aceita a conexão do client
     while((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
-        printf("Cliente Conetou-se");
+        printf("Cliente Conetou-se\n");
         
         int client_running = 1;
         while (client_running == 1){
@@ -74,14 +74,15 @@ int network_main_loop(int listening_socket){
 
             //client da quit
             if(mss == NULL){
-                printf("Cliente Desconetou-se");
+                printf("Cliente Desconetou-se\n");
+                message_t__free_unpacked(&mss->message, NULL);
                 client_running = 0;
                 close(connsockfd);
                 continue;
             }
             
             if(invoke(mss) == -1){
-                printf("Ocorreu um erro ao executar o pedido");
+                printf("Ocorreu um erro ao executar o pedido\n");
                 continue;
             }
             
@@ -108,8 +109,7 @@ struct message_t *network_receive(int client_socket) {
 
     read_all(client_socket, mensagem, msglen);
 
-    MessageT *temp = message_t__unpack(NULL, msglen, mensagem);
-    ret->message = *temp;
+    ret->message = *message_t__unpack(NULL, msglen, mensagem);
 
     return ret;
 }
@@ -120,9 +120,10 @@ int network_send(int client_socket, struct message_t *msg) {
     uint8_t *buffer = malloc(msglen);
     
     message_t__pack(&msg->message, buffer);
-
     write(client_socket, &netlong, sizeof(int));
     write_all(client_socket, buffer, msglen);
+    free(buffer);
+    message_t__free_unpacked(&msg->message, NULL);
 
     return 0;
 }
