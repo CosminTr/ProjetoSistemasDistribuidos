@@ -1,5 +1,6 @@
 #include "network_server.h"
 #include "inet.h"
+#include <signal.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -7,11 +8,21 @@
     João Serafim fc56376
 */
 
+void close_free(int sig){
+    network_server_close();
+    printf("Server Closed due to Ctrl+C\n");
+}
+
 struct sockaddr_in server, client;
 int sockfd, connsockfd;
 socklen_t size_client;
 
 int network_server_init(short port) {
+    // struct sockaddr_in server;
+    // int sockfd;
+
+    signal(SIGINT, close_free);
+    
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("Erro ao criar socket");
         return -1;
@@ -48,13 +59,18 @@ int network_server_init(short port) {
 }
 
 int network_main_loop(int listening_socket){
+    // struct sockaddr_in client;
+    // int connsockfd;
+    // socklen_t size_client;
+    signal(SIGINT, close_free);
     //aceita a conexão do client
     while((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
         printf("Cliente Conetou-se");
-
+        
         int client_running = 1;
         while (client_running == 1){
             struct message_t *mss = network_receive(connsockfd);
+            
 
             //client da quit
             if(mss == NULL){
@@ -91,7 +107,6 @@ struct message_t *network_receive(int client_socket) {
     uint8_t mensagem [msglen];
 
     read_all(client_socket, mensagem, msglen);
-    mensagem[msglen] = '\0';
 
     MessageT *temp = message_t__unpack(NULL, msglen, mensagem);
     ret->message = *temp;
