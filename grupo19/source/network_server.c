@@ -10,7 +10,7 @@
 
 void close_free(int sig){
     network_server_close();
-    printf("Server Closed due to Ctrl+C\n");
+    printf("Server fechado devido a Ctrl+C\n");
     exit(1);
 }
 
@@ -19,8 +19,6 @@ int sockfd, connsockfd;
 socklen_t size_client;
 
 int network_server_init(short port) {
-    // struct sockaddr_in server;
-    // int sockfd;
 
     signal(SIGINT, close_free);
     
@@ -60,10 +58,8 @@ int network_server_init(short port) {
 }
 
 int network_main_loop(int listening_socket){
-    // struct sockaddr_in client;
-    // int connsockfd;
-    // socklen_t size_client;
     signal(SIGINT, close_free);
+    
     //aceita a conexão do client
     while((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
         printf("Cliente Conetou-se\n");
@@ -73,7 +69,7 @@ int network_main_loop(int listening_socket){
             MessageT *mss = network_receive(connsockfd);
             
 
-            //client da quit
+            //client dá quit
             if(mss == NULL){
                 printf("Cliente Desconetou-se\n");
                 message_t__free_unpacked(mss, NULL);

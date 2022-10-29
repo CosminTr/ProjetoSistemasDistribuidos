@@ -20,23 +20,45 @@ int main(int argc, char *argv[]) {
     tree = rtree_connect((char *)argv[1]);
 
     char* pedido;
-    int maxSize = 128; //ALTERAR caso haja standard ou nao ig?
+    int maxSize = 128; 
     char input[maxSize];
+
     if(tree != NULL) {
         int running = 1;
         while (running) {
-            fgets(input, maxSize, stdin);
-            pedido = strtok(input, " \n"); //White space e new line -----pq new line?
+            printf("\nTem os seguintes comandos disponiveis: \n");
+            printf("put <key> <data> \n");
+            printf("get <key> \n");
+            printf("del <key> \n");
+            printf("size \n");
+            printf("height \n");
+            printf("getkeys \n");
+            printf("getvalues \n");
+            printf("quit \n\n");
 
+            fgets(input, maxSize, stdin);
+            pedido = strtok(input, " \n");
             if(strcmp(pedido, "put") == 0) {
                 char* temp = strtok(NULL, " "); //key input
-                char* key = malloc(strlen(temp)+1);  //fazer malloc +1 para \n?
+                if(temp == NULL){
+                    printf("Input incorreto.\n");
+                    continue;
+                }
+                char* key = malloc(strlen(temp)+1); 
                 strcpy(key, temp);
                 
                 temp = strtok(NULL, "\n");//data input
+                if(temp == NULL){
+                    printf("Input incorreto.\n");
+                    free(key);
+                    continue;
+                }
                 struct data_t *data = data_create(strlen(temp)+1);
                 memcpy(data->data, temp, strlen(temp)+1);
                 struct entry_t *entry = entry_create(key, data);
+
+                printf("Dados a inserir:\tChave:%s\tValor:%s\n", entry->key, (char*)entry->value->data);
+                
                 if(rtree_put(tree, entry) == -1)
                     printf("Ocorreu um erro!\n");
                 else
@@ -47,14 +69,18 @@ int main(int argc, char *argv[]) {
             }
             else if (strcmp(pedido, "get") == 0) {
                 char *temp = strtok(NULL, " \n");
+                if(temp == NULL){
+                    printf("Input incorreto.\n");
+                    continue;
+                }
                 char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
 
                 struct data_t *data = rtree_get(tree, key);
                 if (data == NULL)  //ERRO
-                    printf("Não foi possivel get com a chave %s \n", temp);
+                    printf("Não foi possivel encontrar dados com a chave %s \n", temp);
                 else 
-                    printf("Data com tamanho: %d e mensagem %s, obtida \n", data->datasize, (char *)data->data);
+                    printf("Obtida entrada com tamanho: %d e mensagem %s \n", data->datasize-1, (char *)data->data);
 
                 data_destroy(data);
 
@@ -63,7 +89,7 @@ int main(int argc, char *argv[]) {
                 char *temp = strtok(NULL, " \n");
                 char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
-                if (rtree_del(tree, key) == -1) //deu erro
+                if (rtree_del(tree, key) == -1)
                     printf("Não foi possivel apagar a entrada com chave: %s \n", temp);
                 else 
                     printf("Apagado com sucesso a entrada com chave: %s \n", temp);
@@ -90,11 +116,10 @@ int main(int argc, char *argv[]) {
                     printf("Erro ao obter as chaves \n");
                 }
                 else {
+                    printf("Chaves:\n");
                     for(int i = 0; keys[i] != NULL; i++) {
-                       // if (keys[i] != NULL) {
-                            printf("Chave: %s \n", keys[i]);
-                            free(keys[i]);
-                       // }
+                        printf("<%s> \n", keys[i]);
+                        free(keys[i]);
                     }
                 }
                 free(keys);
@@ -105,11 +130,10 @@ int main(int argc, char *argv[]) {
                     printf("Erro ao obter os valores \n");
                 }
                 else {
+                    printf("Valores:\n");
                     for(int i = 0; values[i] != NULL; i++) {
-                       // if (keys[i] != NULL) {
-                            printf("Valor: %s \n", (char*)values[i]);
-                            free(values[i]);
-                       // }
+                        printf("<%s> \n", (char*)values[i]);
+                        free(values[i]);
                     }
                 }
                 free(values);
@@ -118,6 +142,8 @@ int main(int argc, char *argv[]) {
                 rtree_disconnect(tree);
                 running = 0;
                 printf("Conexão terminada\n");         
+            }else{
+                printf("Pedido não existe\n");
             }
         }
     }

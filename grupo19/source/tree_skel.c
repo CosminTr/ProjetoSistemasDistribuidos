@@ -66,25 +66,24 @@ int invoke(MessageT *msg) {
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             return 0;
             break;
-        case MESSAGE_T__OPCODE__OP_SIZE://falta so ver os erros
+        case MESSAGE_T__OPCODE__OP_SIZE:
             msg->opcode = MESSAGE_T__OPCODE__OP_SIZE + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
-            int size = tree_size(rtree);//merge with line below
-            msg->result = size;
+            msg->result = tree_size(rtree);
             return 0;
             break;
-        case MESSAGE_T__OPCODE__OP_HEIGHT: //falta ver os erros
+        case MESSAGE_T__OPCODE__OP_HEIGHT: 
             msg->opcode = MESSAGE_T__OPCODE__OP_HEIGHT + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
-            int height = tree_height(rtree);//merge with line below
-            msg->result = height;
+            msg->result = tree_height(rtree);
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS: ;
             char** keys = tree_get_keys(rtree);
-            if(keys == NULL){//potencial problema de memoria por nao dar free 
+            if(keys == NULL){
                 msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                tree_free_keys(keys);
                 return 0;
             }
             msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
@@ -93,11 +92,12 @@ int invoke(MessageT *msg) {
             msg->keys = keys;
             return 0; 
             break;
-        case MESSAGE_T__OPCODE__OP_GETVALUES: ;//Verificar quao bem funciona este keyArray_to_buf com values
+        case MESSAGE_T__OPCODE__OP_GETVALUES: ;
             void** values = tree_get_values(rtree);
-            if(values == NULL){//potencial problema de memoria por nao dar free 
+            if(values == NULL){
                 msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                tree_free_values(values);
                 return 0;
             }
             msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
@@ -107,18 +107,11 @@ int invoke(MessageT *msg) {
             msg->values = (ProtobufCBinaryData*) malloc(msg->n_values * sizeof(ProtobufCBinaryData));
             struct data_t *temp;
             for (int i = 0; i < msg->n_values; i++){
-                //funciona para void* mas na temos maneira de saber o tamanho
-                // int size = sizeof(values[i]);
-                // msg->values[i].len = size;
-                // msg->values[i].data = malloc(size);
-                // msg->values[i].data = values[i];
-
                 temp = (struct data_t*) values[i];
                 msg->values[i].len = temp->datasize;
                 msg->values[i].data = temp->data;
                 free(values[i]);
             }
-            //free(temp);
             free(values);
             
             return 0; 

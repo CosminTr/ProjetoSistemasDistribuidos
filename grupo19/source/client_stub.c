@@ -2,6 +2,7 @@
 #include "client_stub-private.h"
 #include "network_client.h"
 #include "message_private.h"
+#include <signal.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -10,6 +11,12 @@
 */
 
 struct rtree_t *tree_remota;
+
+void close_free(int sig){
+    rtree_disconnect(tree_remota);
+    printf("Cliente fechou devido a Ctrl+C\n");
+    exit(1);
+}
 
 struct rtree_t *rtree_connect(const char *address_port) {
     tree_remota = malloc (sizeof(struct rtree_t));
@@ -27,7 +34,9 @@ struct rtree_t *rtree_connect(const char *address_port) {
     if (network_connect(tree_remota) == -1) { //ERRO
         return NULL;
     }
-    printf("Client Connected\n");
+
+    signal(SIGINT, close_free);
+    
     return(tree_remota);
 }
 int rtree_disconnect(struct rtree_t *rtree) {
@@ -47,7 +56,6 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     entry_t__init(msg->entry);
 
     if(msg->entry == NULL){
-        //dar free ao message caso entry deu mau malloc
         message_t__free_unpacked(msg, NULL);
         return -1;
     }

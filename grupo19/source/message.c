@@ -37,7 +37,7 @@ int read_all(int socket_num, uint8_t *buffer, int len) {
     while (index < len) {
         resultado = read(socket_num, buffer + index, len - index);
         if(resultado == 0) { //EOF
-            return 0;//devia ser return index;
+            return index;
         }
         if (resultado < 1) {
             perror("Erro na leitura, read_all \n");
