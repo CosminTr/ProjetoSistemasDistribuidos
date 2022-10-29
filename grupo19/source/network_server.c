@@ -11,6 +11,7 @@
 void close_free(int sig){
     network_server_close();
     printf("Server Closed due to Ctrl+C\n");
+    exit(1);
 }
 
 struct sockaddr_in server, client;
@@ -69,13 +70,13 @@ int network_main_loop(int listening_socket){
         
         int client_running = 1;
         while (client_running == 1){
-            struct message_t *mss = network_receive(connsockfd);
+            MessageT *mss = network_receive(connsockfd);
             
 
             //client da quit
             if(mss == NULL){
                 printf("Cliente Desconetou-se\n");
-                message_t__free_unpacked(&mss->message, NULL);
+                message_t__free_unpacked(mss, NULL);
                 client_running = 0;
                 close(connsockfd);
                 continue;
@@ -97,8 +98,7 @@ int network_main_loop(int listening_socket){
 }
 
 
-struct message_t *network_receive(int client_socket) {
-    struct message_t *ret = message_create();
+MessageT *network_receive(int client_socket) {
     int msglen;
     int res;
     if ((res = read(client_socket, &msglen, sizeof(int))) == 0) {
@@ -109,22 +109,19 @@ struct message_t *network_receive(int client_socket) {
 
     read_all(client_socket, mensagem, msglen);
 
-    ret->message = *message_t__unpack(NULL, msglen, mensagem);
-
-    return ret;
+    return message_t__unpack(NULL, msglen, mensagem);
 }
 
-int network_send(int client_socket, struct message_t *msg) {
-    int msglen = message_t__get_packed_size(&msg->message);
+int network_send(int client_socket, MessageT *msg) {
+    int msglen = message_t__get_packed_size(msg);
     int netlong = htonl(msglen);
     uint8_t *buffer = malloc(msglen);
     
-    message_t__pack(&msg->message, buffer);
+    message_t__pack(msg, buffer);
     write(client_socket, &netlong, sizeof(int));
     write_all(client_socket, buffer, msglen);
     free(buffer);
-    message_t__free_unpacked(&msg->message, NULL);
-
+    message_t__free_unpacked(msg, NULL);
     return 0;
 }
 

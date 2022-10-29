@@ -23,91 +23,92 @@ void tree_skel_destroy() {
     tree_destroy(rtree);
 }
 
-int invoke(struct message_t *msg) {
-    MessageT__Opcode opcode = msg->message.opcode;
+int invoke(MessageT *msg) {
+    MessageT__Opcode opcode = msg->opcode;
 
     switch (opcode) {
         case MESSAGE_T__OPCODE__OP_PUT: ;
-            struct data_t *data_value = data_create2(msg->message.entry->data->datasize, msg->message.entry->data->data);
-            if (tree_put(rtree, msg->message.entry->key, data_value) == -1){//não existe
-                msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
-                msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
-                //data_destroy(data_value);
+            struct data_t *data_value = data_create(msg->entry->data->datasize);
+            memcpy(data_value->data, msg->entry->data->data, msg->entry->data->datasize);
+            if (tree_put(rtree, msg->entry->key, data_value) == -1){//não existe
+                msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                data_destroy(data_value);
                 return 0;
             }
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_PUT + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
-            //data_destroy(data_value);
+            msg->opcode = MESSAGE_T__OPCODE__OP_PUT + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            data_destroy(data_value);
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_GET: ;
-            struct data_t *data = tree_get(rtree, msg->message.entry->key);
+            struct data_t *data = tree_get(rtree, msg->entry->key);
             if (data == NULL) { //não existe
-                msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
-                msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_GET + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_VALUE;
-            msg->message.entry->data->data = data->data;
-            msg->message.entry->data->datasize = data->datasize;
+            msg->opcode = MESSAGE_T__OPCODE__OP_GET + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+            msg->entry->data->data = data->data;
+            msg->entry->data->datasize = data->datasize;
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
-            if (tree_del(rtree, msg->message.entry->key) == -1) { //não existe
-                msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
-                msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            if (tree_del(rtree, msg->entry->key) == -1) { //não existe
+                msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_DEL + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            msg->opcode = MESSAGE_T__OPCODE__OP_DEL + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_SIZE://falta so ver os erros
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_SIZE + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+            msg->opcode = MESSAGE_T__OPCODE__OP_SIZE + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             int size = tree_size(rtree);//merge with line below
-            msg->message.result = size;
+            msg->result = size;
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_HEIGHT: //falta ver os erros
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_HEIGHT + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+            msg->opcode = MESSAGE_T__OPCODE__OP_HEIGHT + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             int height = tree_height(rtree);//merge with line below
-            msg->message.result = height;
+            msg->result = height;
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS: ;
             char** keys = tree_get_keys(rtree);
             if(keys == NULL){//potencial problema de memoria por nao dar free 
-                msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
-                msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEYS;
-            msg->message.n_keys = tree_size(rtree);
-            msg->message.keys = keys;
+            msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+            msg->n_keys = tree_size(rtree);
+            msg->keys = keys;
             return 0; 
             break;
         case MESSAGE_T__OPCODE__OP_GETVALUES: ;//Verificar quao bem funciona este keyArray_to_buf com values
             void** values = tree_get_values(rtree);
             if(values == NULL){//potencial problema de memoria por nao dar free 
-                msg->message.opcode = MESSAGE_T__OPCODE__OP_ERROR;
-                msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
                 return 0;
             }
-            msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
-            msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+            msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
 
             // for (int i = 0; i < treeSize; i++){
-            //     msg->message.values[i] = malloc(sizeof(ProtobufCBinaryData));
-            //     msg->message.values[i].len = sizeof(values[i]);
-            //     msg->message.values[i].data = (uint8_t*)values[i];
+            //     msg->values[i] = malloc(sizeof(ProtobufCBinaryData));
+            //     msg->values[i].len = sizeof(values[i]);
+            //     msg->values[i].data = (uint8_t*)values[i];
             // }
-            // msg->message.values = (ProtobufCBinaryData *)values;
-            msg->message.n_values = tree_size(rtree);
-            msg->message.values = (char**)values;
+            // msg->values = (ProtobufCBinaryData *)values;
+            msg->n_values = tree_size(rtree);
+            msg->values = (char**)values;
             return 0; 
             break;
         default:

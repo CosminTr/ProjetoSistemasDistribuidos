@@ -39,175 +39,172 @@ int rtree_disconnect(struct rtree_t *rtree) {
 }
 
 int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return -1;
 
-    msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
-    entry_t__init(msg->message.entry);
+    msg->entry = (EntryT *) malloc(sizeof(EntryT));
+    entry_t__init(msg->entry);
 
-    if(msg->message.entry == NULL){
+    if(msg->entry == NULL){
         //dar free ao message caso entry deu mau malloc
-        message_t__free_unpacked(&msg->message, NULL);
+        message_t__free_unpacked(msg, NULL);
         return -1;
     }
 
-    msg->message.entry->data = (DataT *) malloc(sizeof(DataT));
-    data_t__init(msg->message.entry->data);
+    msg->entry->data = (EntryT__DataT *) malloc(sizeof(EntryT__DataT));
+    entry_t__data_t__init(msg->entry->data);
 
-    if(msg->message.entry->data == NULL){
-        entry_t__free_unpacked(msg->message.entry, NULL);//necessario?
-        message_t__free_unpacked(&msg->message, NULL);
+    if(msg->entry->data == NULL){
+        message_t__free_unpacked(msg, NULL);
         return -1;
     }
 
-    msg->message.entry->key = entry->key;
-    msg->message.entry->data->datasize = entry->value->datasize;
-    msg->message.entry->data->data = entry->value->data;
+    msg->entry->key = entry->key;
+    msg->entry->data->datasize = entry->value->datasize;
+    msg->entry->data->data = entry->value->data;
 
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_PUT;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
-
+    msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
+    
     msg = network_send_receive(rtree, msg);
     //Verificar se deu td correto
     if(msg == NULL)
         return -1;
-    else{
-        message_t__free_unpacked(&msg->message, NULL);
-        return 0;
-    }
+
+    message_t__free_unpacked(msg, NULL);
+    return 0;
         
 }
 
 struct data_t *rtree_get(struct rtree_t *rtree, char *key){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL){
-        message_t__free_unpacked(&msg->message, NULL);
+        message_t__free_unpacked(msg, NULL);
         return NULL;
     }
 
-    msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
-    entry_t__init(msg->message.entry);
-    msg->message.entry->data = (DataT *) malloc(sizeof(DataT));
-    data_t__init(msg->message.entry->data);
+    msg->entry = (EntryT *) malloc(sizeof(EntryT));
+    entry_t__init(msg->entry);
+    msg->entry->data = (EntryT__DataT *) malloc(sizeof(EntryT__DataT));
+    entry_t__data_t__init(msg->entry->data);
     
-    if(msg->message.entry == NULL){
-        message_t__free_unpacked(&msg->message, NULL);
+    if(msg->entry == NULL){
+        message_t__free_unpacked(msg, NULL);
         return NULL;
     }
 
-    msg->message.entry->key = key;
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_GET;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEY;
+    msg->entry->key = key;
+    msg->opcode = MESSAGE_T__OPCODE__OP_GET;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
     msg = network_send_receive(rtree, msg);
 
     if(msg == NULL)
         return NULL;
 
-    int data_len = msg->message.entry->data->datasize;
+    int data_len = msg->entry->data->datasize;
     struct data_t *data = data_create(data_len);
-    memcpy(data->data, msg->message.entry->data->data, data_len);
+    memcpy(data->data, msg->entry->data->data, data_len);
     
-    message_t__free_unpacked(&msg->message, NULL);
+    message_t__free_unpacked(msg, NULL);
     return data;
 
 }
 
 int rtree_del(struct rtree_t *rtree, char *key){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return -1;
 
-    msg->message.entry = (EntryT *) malloc(sizeof(EntryT));
-    entry_t__init(msg->message.entry);
+    msg->entry = (EntryT *) malloc(sizeof(EntryT));
+    entry_t__init(msg->entry);
     
-    if(msg->message.entry == NULL){
-        message_t__free_unpacked(&msg->message, NULL);
+    if(msg->entry == NULL){
+        message_t__free_unpacked(msg, NULL);
         return -1;
     }
 
-    msg->message.entry->key = key;
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_DEL;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_KEY;
+    msg->entry->key = key;
+    msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
     msg = network_send_receive(rtree, msg);
     if(msg == NULL)
         return -1;
     else {
-        message_t__free_unpacked(&msg->message, NULL);
+        message_t__free_unpacked(msg, NULL);
         return 0;
     }
         
 }
 
 int rtree_size(struct rtree_t *rtree){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return -1;
 
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_SIZE;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     msg = network_send_receive(rtree, msg);
     if(msg == NULL)
         return -1;
-    else{
-        int size = msg->message.result;
-        message_t__free_unpacked(&msg->message, NULL);
-        return size;
-    } 
+    
+    int size = msg->result;
+    message_t__free_unpacked(msg, NULL);
+    return size;
         
 }
 
 int rtree_height(struct rtree_t *rtree){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return -1;
 
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_HEIGHT;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    msg->opcode = MESSAGE_T__OPCODE__OP_HEIGHT;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     msg = network_send_receive(rtree, msg);
     if(msg == NULL)
         return -1;
     else{
-        int height = msg->message.result;
-        message_t__free_unpacked(&msg->message, NULL);
+        int height = msg->result;
+        message_t__free_unpacked(msg, NULL);
         return height;
     } 
 }
 
 char **rtree_get_keys(struct rtree_t *rtree){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return NULL;
 
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     msg = network_send_receive(rtree, msg);   
     if(msg == NULL)
         return NULL;
     else{
-        char **keys = msg->message.keys;
+        char **keys = msg->keys;
         return keys;
     } 
 }
 
 void **rtree_get_values(struct rtree_t *rtree){
-    struct message_t *msg = message_create();
+    MessageT *msg = message_create();
     if(msg == NULL)
         return NULL;
 
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_GETVALUES;
-    msg->message.c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    msg->opcode = MESSAGE_T__OPCODE__OP_GETVALUES;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     msg = network_send_receive(rtree, msg); 
     if(msg == NULL)
         return NULL;
     else{
-        void **values = (void **)msg->message.values;
+        void **values = (void **)msg->values;
         return values;
     } 
 }

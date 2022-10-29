@@ -6,9 +6,9 @@
     João Serafim fc56376
 */
 
-struct message_t *message_create(){
-    struct message_t *msg = (struct message_t *) malloc(sizeof(struct message_t));
-    message_t__init(&msg->message);
+MessageT *message_create(){
+    MessageT *msg = (MessageT *) malloc(sizeof(MessageT));
+    message_t__init(msg);
     if(msg == NULL){
         return NULL;
     }
