@@ -52,23 +52,22 @@ int main(int argc, char *argv[]) {
 
                 struct data_t *data = rtree_get(tree, key);
                 if (data == NULL)  //ERRO
-                    printf("Não foi possivel get com a chave %s \n", key);
+                    printf("Não foi possivel get com a chave %s \n", temp);
                 else 
                     printf("Data com tamanho: %d e mensagem %s, obtida \n", data->datasize, (char *)data->data);
 
-                free(key);
+                data_destroy(data);
 
             }
             else if (strcmp(pedido, "del") == 0){
                 char *temp = strtok(NULL, " \n");
-                char *key = malloc(strlen(temp));
+                char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
                 if (rtree_del(tree, key) == -1) //deu erro
-                    printf("Não foi possivel apagar a entrada com chave: %s \n", key);
+                    printf("Não foi possivel apagar a entrada com chave: %s \n", temp);
                 else 
-                    printf("Apagado com sucesso a entrada com chave: %s \n", key);
+                    printf("Apagado com sucesso a entrada com chave: %s \n", temp);
 
-                free(key);
             }
             else if (strcmp(pedido, "size") == 0){
                 int tam = rtree_size(tree);
@@ -94,9 +93,11 @@ int main(int argc, char *argv[]) {
                     for(int i = 0; keys[i] != NULL; i++) {
                        // if (keys[i] != NULL) {
                             printf("Chave: %s \n", keys[i]);
+                            free(keys[i]);
                        // }
                     }
                 }
+                free(keys);
             }
             else if (strcmp(pedido, "getvalues") == 0) {
                 void **values = rtree_get_values(tree);
@@ -107,9 +108,11 @@ int main(int argc, char *argv[]) {
                     for(int i = 0; values[i] != NULL; i++) {
                        // if (keys[i] != NULL) {
                             printf("Valor: %s \n", (char*)values[i]);
+                            free(values[i]);
                        // }
                     }
                 }
+                free(values);
             }
             else if (strcmp(pedido, "quit") == 0){
                 rtree_disconnect(tree);

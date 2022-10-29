@@ -214,7 +214,7 @@ void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_li
 
 void **tree_get_values(struct tree_t *tree){
     int treeSize = tree_size(tree);
-    void **value_list = malloc((treeSize + 1) * sizeof(*value_list));
+    void **value_list = malloc((treeSize + 1) * sizeof(struct data_t));
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;
 
@@ -232,8 +232,10 @@ void get_values_recursive(struct tree_t *tree, int *positionCounter, void **valu
     }
     else{
         get_values_recursive(tree->left, positionCounter, value_list); 
-        struct data_t *temp = data_dup(tree->data->value);
-        value_list[*positionCounter] = temp->data;
+        // struct data_t *temp = data_dup(tree->data->value);
+        // value_list[*positionCounter] = malloc(temp->datasize);
+        // memcpy(value_list[*positionCounter], temp->data, temp->datasize);
+        value_list[*positionCounter] = data_dup(tree->data->value);
         *positionCounter += 1;
         get_values_recursive(tree->right, positionCounter, value_list);
         return;

@@ -168,11 +168,10 @@ int rtree_height(struct rtree_t *rtree){
     msg = network_send_receive(rtree, msg);
     if(msg == NULL)
         return -1;
-    else{
-        int height = msg->result;
-        message_t__free_unpacked(msg, NULL);
-        return height;
-    } 
+    
+    int height = msg->result;
+    message_t__free_unpacked(msg, NULL);
+    return height;
 }
 
 char **rtree_get_keys(struct rtree_t *rtree){
@@ -186,10 +185,17 @@ char **rtree_get_keys(struct rtree_t *rtree){
     msg = network_send_receive(rtree, msg);   
     if(msg == NULL)
         return NULL;
-    else{
-        char **keys = msg->keys;
-        return keys;
-    } 
+        
+    char** keys = (char**) malloc((msg->n_keys + 1) * sizeof(char*));
+    for (int i = 0; i < msg->n_keys; i++){
+        keys[i] = malloc(strlen(msg->keys[i]) + 1);
+        strcpy(keys[i], msg->keys[i]);
+    }
+    keys[msg->n_keys] = '\0';
+    
+    message_t__free_unpacked(msg, NULL);
+    return keys;
+
 }
 
 void **rtree_get_values(struct rtree_t *rtree){
@@ -203,8 +209,16 @@ void **rtree_get_values(struct rtree_t *rtree){
     msg = network_send_receive(rtree, msg); 
     if(msg == NULL)
         return NULL;
-    else{
-        void **values = (void **)msg->values;
-        return values;
-    } 
+
+    void **values = malloc((msg->n_values + 1) * sizeof(*msg->values));
+    for (int i = 0; i < msg->n_values; i++){
+        size_t size = msg->values[i].len;
+        values[i] = malloc(size);
+        memcpy(values[i], msg->values[i].data, size);
+    }
+    values[msg->n_values] = '\0';
+    
+
+    message_t__free_unpacked(msg, NULL);
+    return values;
 }

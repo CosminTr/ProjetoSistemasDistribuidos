@@ -58,7 +58,7 @@ struct  _MessageT
   size_t n_keys;
   char **keys;
   size_t n_values;
-  char **values;
+  ProtobufCBinaryData *values;
 };
 #define MESSAGE_T__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&message_t__descriptor) \

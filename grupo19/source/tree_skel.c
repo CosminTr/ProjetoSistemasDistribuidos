@@ -52,6 +52,8 @@ int invoke(MessageT *msg) {
             msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
             msg->entry->data->data = data->data;
             msg->entry->data->datasize = data->datasize;
+
+            free(data);
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
@@ -101,14 +103,23 @@ int invoke(MessageT *msg) {
             msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
 
-            // for (int i = 0; i < treeSize; i++){
-            //     msg->values[i] = malloc(sizeof(ProtobufCBinaryData));
-            //     msg->values[i].len = sizeof(values[i]);
-            //     msg->values[i].data = (uint8_t*)values[i];
-            // }
-            // msg->values = (ProtobufCBinaryData *)values;
             msg->n_values = tree_size(rtree);
-            msg->values = (char**)values;
+            msg->values = (ProtobufCBinaryData*) malloc(msg->n_values * sizeof(ProtobufCBinaryData));
+            struct data_t *temp;
+            for (int i = 0; i < msg->n_values; i++){
+                //funciona para void* mas na temos maneira de saber o tamanho
+                // int size = sizeof(values[i]);
+                // msg->values[i].len = size;
+                // msg->values[i].data = malloc(size);
+                // msg->values[i].data = values[i];
+
+                temp = (struct data_t*) values[i];
+                msg->values[i].len = temp->datasize;
+                msg->values[i].data = temp->data;
+            }
+            free(temp);
+            free(values);
+            
             return 0; 
             break;
         default:
