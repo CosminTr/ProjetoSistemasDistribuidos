@@ -118,7 +118,7 @@ int invoke(MessageT *msg) {
                 msg->values[i].data = temp->data;
                 free(values[i]);
             }
-            free(temp);
+            //free(temp);
             free(values);
             
             return 0; 
