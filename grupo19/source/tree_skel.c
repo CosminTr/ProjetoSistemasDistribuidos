@@ -116,6 +116,7 @@ int invoke(MessageT *msg) {
                 temp = (struct data_t*) values[i];
                 msg->values[i].len = temp->datasize;
                 msg->values[i].data = temp->data;
+                free(values[i]);
             }
             free(temp);
             free(values);
