@@ -1,6 +1,6 @@
 syntax = "proto3";
-message message_t
- {
+message message_t{
+
 	int32 result = 1;
 	entry_t entry = 2;
 	
@@ -29,17 +29,18 @@ message message_t
         }
         C_type c_type = 4;
 
-	repeated string data = 5;
+	repeated string keys = 5;
+        repeated bytes values = 6;
 }
 
 message entry_t{
-
-	string key = 1;
-	data_t data = 2;
-}
-
-message data_t{
 	
-	int32 datasize = 1;
-	string data = 2;
-}
+		message data_t{
+	
+			int32 datasize = 1;
+			string data = 2;
+		}
+		
+		string key = 1;
+		data_t data = 2;
+	}

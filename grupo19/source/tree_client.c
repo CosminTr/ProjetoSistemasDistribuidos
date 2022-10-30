@@ -9,6 +9,18 @@
     João Serafim fc56376
 */
 
+void commands(){
+    printf("\nTem os seguintes comandos disponiveis: \n");
+    printf("put <key> <data> \n");
+    printf("get <key> \n");
+    printf("del <key> \n");
+    printf("size \n");
+    printf("height \n");
+    printf("getkeys \n");
+    printf("getvalues \n");
+    printf("quit \n\n");
+}
+
 int main(int argc, char *argv[]) {
     struct rtree_t *tree;
 
@@ -23,25 +35,18 @@ int main(int argc, char *argv[]) {
     int maxSize = 128; 
     char input[maxSize];
 
+    commands();
+
     if(tree != NULL) {
         int running = 1;
         while (running) {
-            printf("\nTem os seguintes comandos disponiveis: \n");
-            printf("put <key> <data> \n");
-            printf("get <key> \n");
-            printf("del <key> \n");
-            printf("size \n");
-            printf("height \n");
-            printf("getkeys \n");
-            printf("getvalues \n");
-            printf("quit \n\n");
-
             fgets(input, maxSize, stdin);
             pedido = strtok(input, " \n");
             if(strcmp(pedido, "put") == 0) {
                 char* temp = strtok(NULL, " "); //key input
                 if(temp == NULL){
                     printf("Input incorreto.\n");
+                    commands();
                     continue;
                 }
                 char* key = malloc(strlen(temp)+1); 
@@ -51,6 +56,7 @@ int main(int argc, char *argv[]) {
                 if(temp == NULL){
                     printf("Input incorreto.\n");
                     free(key);
+                    commands();
                     continue;
                 }
                 struct data_t *data = data_create(strlen(temp)+1);
@@ -71,6 +77,7 @@ int main(int argc, char *argv[]) {
                 char *temp = strtok(NULL, " \n");
                 if(temp == NULL){
                     printf("Input incorreto.\n");
+                    commands();
                     continue;
                 }
                 char *key = malloc(strlen(temp)+1);
