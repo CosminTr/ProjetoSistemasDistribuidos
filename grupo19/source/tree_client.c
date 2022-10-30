@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
                 printf("Conexão terminada\n");         
             }else{
                 printf("Pedido não existe\n");
+                commands();
             }
         }
     }
