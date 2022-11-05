@@ -1,6 +1,7 @@
 #include "tree_skel.h"
 #include "tree.h"
 #include <errno.h>
+#include "message_private.h"
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -9,6 +10,14 @@
 */
 
 struct tree_t *rtree;
+int last_assigned;
+
+struct op_proc{        //maybe move this somewhere else
+    int max_proc;
+    int in_progress[];           // UNSURE WHAT SIZE TO GIVE
+    //
+} o_p_current;
+struct request_t *queue_head;
 
 int tree_skel_init() {
     rtree = tree_create();
