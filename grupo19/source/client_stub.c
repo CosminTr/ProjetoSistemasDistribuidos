@@ -230,3 +230,7 @@ void **rtree_get_values(struct rtree_t *rtree){
     message_t__free_unpacked(msg, NULL);
     return values;
 }
+
+int rtree_verify(struct rtree_t *rtree, int op_n) {
+    
+}
