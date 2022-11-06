@@ -132,5 +132,5 @@ int invoke(MessageT *msg) {
 }
 
 int verify(int op_n) {
-    return queue_head.op_n < op_n; //MIGHT NOT BE THIS SIMPLE
+    return o_p_current.max_proc < op_n; //MIGHT NOT BE THIS SIMPLE
 }
