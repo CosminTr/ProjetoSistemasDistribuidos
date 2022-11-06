@@ -128,4 +128,9 @@ int invoke(MessageT *msg) {
         default:
             return -1;
     }
+
+}
+
+int verify(int op_n) {
+    return queue_head.op_n < op_n; //MIGHT NOT BE THIS SIMPLE
 }
