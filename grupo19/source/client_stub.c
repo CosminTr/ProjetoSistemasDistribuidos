@@ -244,7 +244,7 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; // OU MESSAGE_T__C_TYPE__CT_NONE; ?????
 
     msg = network_send_receive(rtree, msg);
-    if(msg->message.c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+    if(msg->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         printf("Erro na verificação, c_s_verify\n");
         return -1;
     }
