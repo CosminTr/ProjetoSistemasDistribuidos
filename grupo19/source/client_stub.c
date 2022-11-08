@@ -240,7 +240,7 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
         printf("Erro ao criar mensagem, c_s_verify\n");
         return -1;
     }
-    msg->message.opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
+    msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; // OU MESSAGE_T__C_TYPE__CT_NONE; ?????
 
     msg = network_send_receive(rtree, msg);
