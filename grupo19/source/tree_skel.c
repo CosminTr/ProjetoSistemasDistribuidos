@@ -2,6 +2,7 @@
 #include "tree.h"
 #include <errno.h>
 #include "message_private.h"
+#include <pthread.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -12,13 +13,18 @@
 struct tree_t *rtree;
 
 //Multiplexagem-------------
-int last_assigned;
+int last_assigned = 1;
 struct op_proc{        //maybe move this somewhere else
     int max_proc;
-    int in_progress[];           // UNSURE WHAT SIZE TO GIVE
-} o_p_current;
+    int *in_progress;// identificadores das operacoes de escrita em execucao
+} op_current;
 
-struct request_t *queue_head;
+struct request_t *queue_head = NULL; //INICIALIZAR A NULL?
+
+pthread_mutex_t op_lock;
+pthread_mutex_t tree_lock;
+pthread_mutex_t queue_lock;
+pthread_cond_t queue_not_empty;
 //----------------------------
 
 
@@ -28,13 +34,61 @@ int tree_skel_init(int N) {
         perror("Erro ao iniciar a tree - t_s_i");
         return -1;
     }
+
+    op_current.in_progress = (int*) malloc(N * sizeof(int));
+
+    if(pthread_mutex_init(&op_lock, NULL) != 0){//POTENCIAL MEM LOSS
+        perror(strerror(errno));
+        return -1;
+    }
+    
+    if(pthread_mutex_init(&tree_lock, NULL) != 0){//POTENCIAL MEM LOSS
+        perror(strerror(errno));
+        return -1;
+    }
+
+    if(pthread_mutex_init(&queue_lock, NULL) != 0){//POTENCIAL MEM LOSS
+        perror(strerror(errno));
+        return -1;
+    }
+
+    if(pthread_cond_init(&queue_not_empty, NULL) != 0){//POTENCIAL MEM LOSS
+        perror(strerror(errno));
+        return -1;
+    }
+
+    pthread_t thread[N];
+    int *r;
+
+    //Create
+    for (int i = 0; i < N; i++){
+        if (pthread_create(thread[i], NULL, &process_request, NULL) != 0){
+			printf("\nThread %d não criada.\n", i);
+			exit(EXIT_FAILURE);
+		}
+    }
+
+    //Join--------POTENCIAIS ERROS COM A COLOCACAO DO JOIN
+    for (int i = 0; i < N; i++){
+        if (pthread_join(thread[i], (void**) &r) != 0){
+			printf("\nErro no join\n");
+			exit(EXIT_FAILURE);
+		}
+    }
+    
     return 0;
 }
 
 void tree_skel_destroy() {
     tree_destroy(rtree);
+    free(op_current.in_progress);
+    pthread_cond_destroy(&queue_not_empty);
+    pthread_mutex_destroy(&queue_lock);
+    pthread_mutex_destroy(&tree_lock);
+    pthread_mutex_destroy(&op_lock);
 }
-
+//NOTA QUAIS OS CASOS DE ERRO PARA SIZE, HEIGHT, VERIFY, PUT, DEL?
+//INCOMPLETA
 int invoke(MessageT *msg) {
     MessageT__Opcode opcode = msg->opcode;
 
@@ -128,16 +182,55 @@ int invoke(MessageT *msg) {
             
             return 0; 
             break;
+        case MESSAGE_T__OPCODE__OP_VERIFY:
+            msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY + 1;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+            msg->result = verify(msg->op_n);// 1:True, 0:False
         default:
             return -1;
     }
 
 }
 
+//verifica se op_n esta na lista de in_progress para responmder aos clientes
 int verify(int op_n) {
-    return o_p_current.max_proc > op_n; //MIGHT NOT BE THIS SIMPLE
+    //potencial ponto critico para aceder a "in_progress" (talvez fazer no invoke antes de chamar esta funcao)
+    for (int i = 0; i < (sizeof(op_current.in_progress)/sizeof(int)); i++){
+        if(op_current.in_progress[i] == op_n)
+        return 1;//True
+    }
+    return 0;//False
 }
 
-void *process_request(void *params){
+void *process_request(void *params){ //WHAT ARE THE *PARAMS??
+    pthread_mutex_lock(&queue_lock);
+    while(queue_head == NULL)// fila vazia->esperar
+        pthread_cond_wait(&queue_not_empty, &queue_lock);
+    struct request_t *current = queue_head;
+    queue_head = current->next;
+    
+    //colocar o id na fila "in_progress"------------
+    pthread_mutex_lock(&op_lock);//talvez um trylock??
+    for(int i = 0; i < (sizeof(op_current.in_progress)/sizeof(int)); i++)
+        if(op_current.in_progress[i] != 0)
+            op_current.in_progress[i] = current->op_n;
+    pthread_mutex_unlock(&op_lock);
+    //----------------------------------------------
 
+    //processar o current request-------------------
+    if(current->op == 1){//put
+        struct data_t *data_value = data_create(strlen(current->data));
+        memcpy(data_value->data, current->data, strlen(current->data)+1);
+        pthread_mutex_lock(&tree_lock);
+        tree_put(rtree, current->key, data_value);
+        data_destroy(data_value);
+        pthread_mutex_unlock(&tree_lock);
+    }else if(current->op == 0){//del
+        pthread_mutex_lock(&tree_lock);
+        tree_del(rtree, current->key);
+        pthread_mutex_unlock(&tree_lock);
+    }
+    //----------------------------------------------
+    //DAR FREE AO CURRENT??
+    pthread_mutex_unlock(&queue_lock);
 }

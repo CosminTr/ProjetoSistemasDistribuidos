@@ -21,11 +21,11 @@ socklen_t size_client;
 
 int nfdesc; //número de sockets para clientes + 1 para o Listen....possivelmente fazer const
 
-int network_server_init(short port, int N_threads) {
+int network_server_init(short port) {
 
     signal(SIGINT, close_free);
 
-    nfdesc = N_threads; //maybe? possivelmente fazer uma constante
+    nfdesc = 5; //maybe? possivelmente fazer uma constante
     
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("Erro ao criar socket\n");
@@ -41,12 +41,6 @@ int network_server_init(short port, int N_threads) {
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    int tree = tree_skel_init(N_threads);
-    if (tree == -1) {
-        perror("Erro ao inicializar tree: \n");
-        return -1;
-    }
 
     if (bind(sockfd, (struct sockaddr *) &server, sizeof(server)) < 0){
         perror("Erro ao fazer bind\n");

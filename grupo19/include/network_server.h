@@ -7,7 +7,7 @@
  * num determinado porto.
  * Retornar descritor do socket (OK) ou -1 (erro).
  */
-int network_server_init(short port, int N_threads);
+int network_server_init(short port);
 
 /* Esta função deve:
  * - Aceitar uma conexão de um cliente;

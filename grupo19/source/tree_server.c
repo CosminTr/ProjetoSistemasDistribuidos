@@ -14,7 +14,12 @@ int main(int argc, char * argv[]){
         return -1;
     }
     printf("Server Iniciado\n");
-    int server_socket = network_server_init(atoi(argv[1]), atoi(argv[2]));
+    int server_socket = network_server_init(atoi(argv[1]));
+    int tree = tree_skel_init(atoi(argv[2]));
+    if (tree == -1) {
+        perror("Erro ao inicializar tree: \n");
+        return -1;
+    }
     network_main_loop(server_socket);
     network_server_close();
 
