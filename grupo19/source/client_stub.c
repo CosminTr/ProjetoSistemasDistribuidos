@@ -233,14 +233,14 @@ void **rtree_get_values(struct rtree_t *rtree){
 
 int rtree_verify(struct rtree_t *rtree, int op_n) {
 
-    //ONDE USAR op_n ?
+    //Usar mais op_n?
 
     MessageT *msg = message_create();
     if (msg == NULL) {
         printf("Erro ao criar mensagem, c_s_verify\n");
         return -1;
     }
-    //msg->message.opcode = MESSAGE_T__OPCODE__OP_VERIFY; Unsure, needs new compiling
+    msg->message.opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; // OU MESSAGE_T__C_TYPE__CT_NONE; ?????
 
     msg = network_send_receive(rtree, msg);
@@ -248,5 +248,6 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
         printf("Erro na verificação, c_s_verify\n");
         return -1;
     }
+    printf("A operacao identificada por %d foi executada.\n", op_n);
     return 0;
 }
