@@ -53,6 +53,7 @@ struct  _MessageT
 {
   ProtobufCMessage base;
   int32_t result;
+  int32_t op_n;
   EntryT *entry;
   MessageT__Opcode opcode;
   MessageT__CType c_type;
@@ -63,7 +64,7 @@ struct  _MessageT
 };
 #define MESSAGE_T__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&message_t__descriptor) \
-    , 0, NULL, MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0,NULL, 0,NULL }
+    , 0, 0, NULL, MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, 0,NULL, 0,NULL }
 
 
 struct  _EntryT__DataT

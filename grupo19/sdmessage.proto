@@ -2,6 +2,7 @@ syntax = "proto3";
 message message_t{
 
 	int32 result = 1;
+        int32 op_n = 7;
 	entry_t entry = 2;
 	
         enum Opcode {
