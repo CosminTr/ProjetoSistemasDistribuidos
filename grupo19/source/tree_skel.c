@@ -10,16 +10,19 @@
 */
 
 struct tree_t *rtree;
-int last_assigned;
 
+//Multiplexagem-------------
+int last_assigned;
 struct op_proc{        //maybe move this somewhere else
     int max_proc;
     int in_progress[];           // UNSURE WHAT SIZE TO GIVE
-    //
 } o_p_current;
-struct request_t *queue_head;
 
-int tree_skel_init() {
+struct request_t *queue_head;
+//----------------------------
+
+
+int tree_skel_init(int N) {
     rtree = tree_create();
     if(rtree == NULL) {
         perror("Erro ao iniciar a tree - t_s_i");
@@ -133,4 +136,8 @@ int invoke(MessageT *msg) {
 
 int verify(int op_n) {
     return o_p_current.max_proc > op_n; //MIGHT NOT BE THIS SIMPLE
+}
+
+void *process_request(void *params){
+
 }

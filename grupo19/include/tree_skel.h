@@ -8,9 +8,11 @@
 /* Inicia o skeleton da árvore.
  * O main() do servidor deve chamar esta função antes de poder usar a
  * função invoke(). 
+ * A função deve lançar N threads secundárias responsáveis por atender 
+ * pedidos de escrita na árvore.
  * Retorna 0 (OK) ou -1 (erro, por exemplo OUT OF MEMORY)
- */
-int tree_skel_init();
+*/
+int tree_skel_init(int N);
 
 /* Liberta toda a memória e recursos alocados pela função tree_skel_init.
  */
@@ -25,5 +27,9 @@ int invoke(MessageT *msg);
 /* Verifica se a operação identificada por op_n foi executada.
 */
 int verify(int op_n);
+
+/* Função da thread secundária que vai processar pedidos de escrita.
+*/
+void *process_request(void *params);
 
 #endif
