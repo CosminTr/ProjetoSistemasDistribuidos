@@ -9,12 +9,12 @@
 
 int main(int argc, char * argv[]){
 
-    if (argc != 2){
-        printf("Input errado!\n Deve introduzir: ./tree-server <server_port>\n");
+    if (argc != 3){
+        printf("Input errado!\n Deve introduzir: ./tree-server <server_port> <N-threads>\n");
         return -1;
     }
     printf("Server Iniciado\n");
-    int server_socket = network_server_init(atoi(argv[1]));
+    int server_socket = network_server_init(atoi(argv[1]), atoi(argv[2]));
     network_main_loop(server_socket);
     network_server_close();
 
