@@ -103,25 +103,28 @@ int invoke(MessageT *msg) {
             //o temporary = last_assigned la dentro pra garantir
             pthread_mutex_lock(&queue_lock);
             //coloca elemento no fim da fila
-            struct request_t *current1 = queue_head;
             struct request_t *temporary1 = (struct request_t *) malloc(sizeof(struct request_t));
             temporary1->op_n = last_assigned;
             temporary1->op = 1;
-            temporary1->key = msg->entry->key;
-            temporary1->data = data_value;
+            temporary1->key = malloc(strlen(msg->entry->key)+1);
+            strcpy(temporary1->key, msg->entry->key);
+            temporary1->data = data_dup(data_value);
             temporary1->next = NULL;
-            if(current1 == NULL)
-                current1 = temporary1;
-            else 
+            if(queue_head == NULL)
+                queue_head = temporary1;
+            else{ 
+                struct request_t *current1 = queue_head;
                 while(current1->next != NULL)
                     current1 = current1->next;
-            current1->next = temporary1;
-            last_assigned++;
-            pthread_mutex_unlock(&queue_lock);
+                current1->next = temporary1;
+            }
 
+            last_assigned++;
             msg->opcode = MESSAGE_T__OPCODE__OP_PUT + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             msg->op_n = temporary1->op_n;
+            pthread_cond_broadcast(&queue_not_empty);
+            pthread_mutex_unlock(&queue_lock);
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_GET: ;
@@ -144,25 +147,28 @@ int invoke(MessageT *msg) {
             //o temporary = last_assigned la dentro pra garantir
             pthread_mutex_lock(&queue_lock);
             //coloca elemento no fim da fila
-            struct request_t *current2 = queue_head;
+            
             struct request_t *temporary2 = (struct request_t *) malloc(sizeof(struct request_t));
             temporary2->op_n = last_assigned;
-            temporary2->op = 1;
-            temporary2->key = msg->entry->key;
+            temporary2->op = 0;
+            temporary2->key = malloc(strlen(msg->entry->key)+1);
+            strcpy(temporary2->key, msg->entry->key);
             temporary2->data = NULL;
             temporary2->next = NULL;
-            if(current2 == NULL)
-                current2 = temporary2;
-            else 
+            if(queue_head == NULL)
+                queue_head = temporary2;
+            else{ 
+                struct request_t *current2 = queue_head;
                 while(current2->next != NULL)
                     current2 = current2->next;
-            current2->next = temporary2;
+                current2->next = temporary2;
+            }
             last_assigned++;
-            pthread_mutex_unlock(&queue_lock);
-
             msg->opcode = MESSAGE_T__OPCODE__OP_DEL + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             msg->op_n = temporary2->op_n;
+            pthread_cond_broadcast(&queue_not_empty);
+            pthread_mutex_unlock(&queue_lock);
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_SIZE:
@@ -219,6 +225,8 @@ int invoke(MessageT *msg) {
             msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             msg->result = verify(msg->op_n);// 1:True, 0:False
+            return 0;
+            break;
         default:
             return -1;
     }
@@ -254,23 +262,27 @@ void *process_request(void *params){ //WHAT ARE THE *PARAMS??
         //processar o current request-------------------
         if(current->op == 1){//put
             pthread_mutex_lock(&tree_lock);
-            tree_put(rtree, current->key, current->data);
+            if(tree_put(rtree, current->key, current->data) == -1)
+                printf("Error inserting entry\n");
             pthread_mutex_unlock(&tree_lock);
 
         }else if(current->op == 0){//del
             pthread_mutex_lock(&tree_lock);
-            tree_del(rtree, current->key);
+            if(tree_del(rtree, current->key) == -1)
+                printf("Key not found\n");
             pthread_mutex_unlock(&tree_lock);
         }
         //----------------------------------------------
         pthread_mutex_lock(&op_lock);
         if(current->op_n > op_current.max_proc) //substituir max_proc se necessario
             op_current.max_proc = current->op_n;
+
+        for(int i = 0; op_current.in_progress[i] != -1; i++) //remover id de in_progress
+            if(op_current.in_progress[i] == current->op_n)
+                op_current.in_progress[i] = 0;
         pthread_mutex_unlock(&op_lock);
 
         //DAR FREE AO CURRENT??
-        data_destroy(current->data);
-        free(current->key);
         free(current);
 
         pthread_mutex_unlock(&queue_lock);
