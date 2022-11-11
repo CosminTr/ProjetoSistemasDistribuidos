@@ -249,8 +249,8 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
     if(msg == NULL) 
         return -1;
     
-    op_n = msg->op_n;
+    int res = msg->op_n;
 
     message_t__free_unpacked(msg, NULL);
-    return op_n;
+    return res;
 }
