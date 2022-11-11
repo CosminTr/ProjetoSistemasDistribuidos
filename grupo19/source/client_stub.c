@@ -244,13 +244,14 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
     }
     msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; 
+    msg->op_n = op_n;
 
     msg = network_send_receive(rtree, msg);
     if(msg == NULL) 
         return -1;
     
-    int op_n = msg->op_n;
+    int result = msg->result;
 
     message_t__free_unpacked(msg, NULL);
-    return op_n;
+    return result;
 }
