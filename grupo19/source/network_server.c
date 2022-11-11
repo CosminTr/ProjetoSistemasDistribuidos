@@ -64,9 +64,10 @@ int network_main_loop(int listening_socket){
     int nfds, kfds, i;
 
     //inicializar os FileDescriptors das conns a -1
-    for(i = 0; i < nfdesc; i++)
+    for(i = 0; i < nfdesc; i++){
         conns[i].fd = -1;// poll ignora estruturas com fd < 0
-    
+        conns[i].revents = 0; //fix a um erro que colocava um revent a != 0
+    }
     //Listening socket será a conns[0]
     conns[0].fd = sockfd;
     conns[0].events = POLLIN;//esperar ligações
@@ -93,6 +94,7 @@ int network_main_loop(int listening_socket){
                         message_t__free_unpacked(mss, NULL);
                         close(conns[i].fd);
                         conns[i].fd = -1;//remove client from conns
+                        continue;
                     }else{
                         if(invoke(mss) == -1)
                             printf("Ocorreu um erro ao executar o pedido\n");
@@ -101,13 +103,15 @@ int network_main_loop(int listening_socket){
                         if(network_send(conns[i].fd, mss) == -1){
                             close(conns[i].fd);//POTENCIAL DE DAR ERRADO
                             conns[i].fd = -1;//remove client from conns
-                            return -1;//PENSO NAO SER NECESSARIO(pq operacao continua sem esse client)
+                            continue;
+                            //return -1;//PENSO NAO SER NECESSARIO(pq operacao continua sem esse client)
                         }
                     }
                 }
                 if((conns[i].revents & POLL_ERR) || (conns[i].revents & POLL_HUP)){
                     close(conns[i].fd);
                     conns[i].fd = -1; //remove client from conns
+                    continue;
                 }
             }
         } 
