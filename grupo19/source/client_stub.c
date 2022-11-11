@@ -79,9 +79,11 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     //Verificar se deu td correto
     if(msg == NULL)
         return -1;
-
+    
+    int op_n = msg->op_n; 
+    
     message_t__free_unpacked(msg, NULL);
-    return 0;
+    return op_n;
         
 }
 
@@ -140,11 +142,11 @@ int rtree_del(struct rtree_t *rtree, char *key){
     msg = network_send_receive(rtree, msg);
     if(msg == NULL)
         return -1;
-    else {
-        message_t__free_unpacked(msg, NULL);
-        return 0;
-    }
-        
+
+    int op_n = msg->op_n;
+
+    message_t__free_unpacked(msg, NULL);
+    return op_n;        
 }
 
 int rtree_size(struct rtree_t *rtree){
@@ -247,5 +249,8 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
     if(msg == NULL) 
         return -1;
     
-    return msg->op_n;
+    int op_n = msg->op_n;
+
+    message_t__free_unpacked(msg, NULL);
+    return op_n;
 }

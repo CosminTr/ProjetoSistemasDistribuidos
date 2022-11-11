@@ -110,8 +110,11 @@ int invoke(MessageT *msg) {
             temporary1->key = msg->entry->key;
             temporary1->data = data_value;
             temporary1->next = NULL;
-            while(current1->next != NULL)
-                current1 = current1->next;
+            if(current1 == NULL)
+                current1 = temporary1;
+            else 
+                while(current1->next != NULL)
+                    current1 = current1->next;
             current1->next = temporary1;
             last_assigned++;
             pthread_mutex_unlock(&queue_lock);
@@ -148,8 +151,11 @@ int invoke(MessageT *msg) {
             temporary2->key = msg->entry->key;
             temporary2->data = NULL;
             temporary2->next = NULL;
-            while(current2->next != NULL)
-                current2 = current2->next;
+            if(current2 == NULL)
+                current2 = temporary2;
+            else 
+                while(current2->next != NULL)
+                    current2 = current2->next;
             current2->next = temporary2;
             last_assigned++;
             pthread_mutex_unlock(&queue_lock);

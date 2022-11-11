@@ -65,11 +65,11 @@ int main(int argc, char *argv[]) {
                 struct entry_t *entry = entry_create(key, data);
 
                 printf("Dados a inserir:\tChave:%s\tValor:%s\n", entry->key, (char*)entry->value->data);
-                
-                if(rtree_put(tree, entry) == -1)
+                int result = rtree_put(tree, entry);
+                if(result == -1)
                     printf("Ocorreu um erro!\n");
                 else
-                    printf("Dados inseridos com sucesso\n");
+                    printf("O put foi enviado e o número de processo é %d\n", result);
                 
                 free(entry->value);
                 free(entry);
@@ -103,10 +103,11 @@ int main(int argc, char *argv[]) {
                 char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
 
-                if (rtree_del(tree, key) == -1)
+                int result = rtree_del(tree, key);
+                if (result == -1)
                     printf("Não foi possivel apagar a entrada com chave: %s \n", temp);
                 else 
-                    printf("Apagado com sucesso a entrada com chave: %s \n", temp);
+                    printf("A operação foi enviada com sucesso e o número do processo é %d\n", result);
 
             }
             else if (strcmp(pedido, "size") == 0){
