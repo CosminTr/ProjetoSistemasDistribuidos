@@ -241,13 +241,11 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
         return -1;
     }
     msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
-    msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; // OU MESSAGE_T__C_TYPE__CT_NONE; ?????
+    msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; 
 
     msg = network_send_receive(rtree, msg);
-    if(msg->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
-        printf("Erro na verificação, c_s_verify\n");
+    if(msg == NULL) 
         return -1;
-    }
-    printf("A operacao identificada por %d foi executada.\n", op_n);
-    return 0;
+    
+    return msg->op_n;
 }

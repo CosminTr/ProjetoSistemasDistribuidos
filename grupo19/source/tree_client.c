@@ -18,6 +18,7 @@ void commands(){
     printf("height \n");
     printf("getkeys \n");
     printf("getvalues \n");
+    printf("verify <op_n> \n");
     printf("quit \n\n");
 }
 
@@ -94,8 +95,14 @@ int main(int argc, char *argv[]) {
             }
             else if (strcmp(pedido, "del") == 0){
                 char *temp = strtok(NULL, " \n");
+                if(temp == NULL){
+                    printf("Input incorreto.\n");
+                    commands();
+                    continue;
+                }
                 char *key = malloc(strlen(temp)+1);
                 strcpy(key, temp);
+
                 if (rtree_del(tree, key) == -1)
                     printf("Não foi possivel apagar a entrada com chave: %s \n", temp);
                 else 
@@ -144,6 +151,25 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 free(values);
+            }
+            else if (strcmp(pedido, "verify") == 0){
+                char *temp = strtok(NULL, " \n");
+                if(temp == NULL){
+                    printf("Input incorreto.\n");
+                    commands();
+                    continue;
+                }
+                int op_n = atoi(temp);
+
+                int result = rtree_verify(tree, op_n);
+                if(result == -1)
+                    printf("Erro na verificação, t_c_verify\n");
+                else {
+                    if(result == 1)
+                        printf("A operacao identificada por %d foi executada.\n", op_n);
+                    else if(result == 0)
+                        printf("A operacao identificada por %d ainda não foi executada.\n", op_n);
+                }
             }
             else if (strcmp(pedido, "quit") == 0){
                 rtree_disconnect(tree);
