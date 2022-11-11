@@ -166,6 +166,8 @@ int main(int argc, char *argv[]) {
                 if(result == -1)
                     printf("Erro na verificação, t_c_verify\n");
                 else {
+                    if(result == -2)
+                        printf("A operacao identificada por %d não está na lista de espera nem foi executada\n", op_n);
                     if(result == 0)
                         printf("A operacao identificada por %d não está na lista de espera logo foi executada.\n", op_n);
                     else if(result == 1)

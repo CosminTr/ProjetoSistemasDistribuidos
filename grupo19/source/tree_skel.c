@@ -235,6 +235,8 @@ int invoke(MessageT *msg) {
 
 //verifica se op_n esta na lista de in_progress para responmder aos clientes
 int verify(int op_n) {
+    if (op_n > op_current.max_proc)
+        return -2;
     //potencial ponto critico para aceder a "in_progress" (talvez fazer no invoke antes de chamar esta funcao)
     for (int i = 0; op_current.in_progress[i] != -1; i++){
         if(op_current.in_progress[i] == op_n)
