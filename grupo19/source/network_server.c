@@ -25,7 +25,7 @@ int network_server_init(short port) {
 
     signal(SIGINT, close_free);
 
-    nfdesc = 5; //maybe? possivelmente fazer uma constante
+    nfdesc = 2; //maybe? possivelmente fazer uma constante
     
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("Erro ao criar socket\n");
@@ -78,13 +78,14 @@ int network_main_loop(int listening_socket){
     while((kfds = poll(conns, nfds, -1)) >= 0){ //NOTA poll devolve 0 se timeout ou >0(número de descritores com eventos) 
         if(kfds > 0){ //numero de descritores com evento ou erro
             
-            if((conns[0].revents & POLLIN) && (nfds < nfdesc))//recebeu ligacao
+            if((conns[0].revents & POLLIN) && (nfds < nfdesc)){//recebeu ligacao
+                printf("Cliente Conetado!\n");
                 if((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
                    conns[nfds].fd = connsockfd; //TALVEZ DAR MERGE COM A LINHA DE CIMA
                    conns[nfds].events = POLLIN; 
                    nfds++;
                 }
-            
+            }
             for(i = 1; i < nfdesc; i++){
                 if(conns[i].revents & POLLIN){
                     MessageT *mss = network_receive(conns[i].fd);
@@ -94,6 +95,7 @@ int network_main_loop(int listening_socket){
                         message_t__free_unpacked(mss, NULL);
                         close(conns[i].fd);
                         conns[i].fd = -1;//remove client from conns
+                        nfds--;
                         continue;
                     }else{
                         if(invoke(mss) == -1)
@@ -103,6 +105,7 @@ int network_main_loop(int listening_socket){
                         if(network_send(conns[i].fd, mss) == -1){
                             close(conns[i].fd);//POTENCIAL DE DAR ERRADO
                             conns[i].fd = -1;//remove client from conns
+                            nfds--;
                             continue;
                             //return -1;//PENSO NAO SER NECESSARIO(pq operacao continua sem esse client)
                         }
@@ -111,6 +114,7 @@ int network_main_loop(int listening_socket){
                 if((conns[i].revents & POLL_ERR) || (conns[i].revents & POLL_HUP)){
                     close(conns[i].fd);
                     conns[i].fd = -1; //remove client from conns
+                    nfds--; 
                     continue;
                 }
             }
