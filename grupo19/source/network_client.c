@@ -21,14 +21,15 @@ int network_connect(struct rtree_t *rtree){
     //Criar socket TCP
     if((rtree->socket_num = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         perror("Erro ao criar socket TCP - Cliente");
-        return -1;
+        exit(1);
     }
     
     //Estabelece conexao com o servidor
     if(connect(rtree->socket_num,(struct sockaddr *)&rtree->server_socket, sizeof(rtree->server_socket)) < 0){
         perror("Erro ao conetar ao servidor - Client");
         close(rtree->socket_num);
-        return -1;
+        free(rtree);
+        exit(1);
     }
 
     signal(SIGPIPE, conn_lost);
@@ -42,12 +43,16 @@ MessageT *network_send_receive(struct rtree_t * rtree, MessageT *msg){
     int msglen = message_t__get_packed_size(msg);
     int resposta_len ;
     uint8_t *buffer = malloc(msglen); 
-    
     //send
     message_t__pack(msg, buffer);
     int netlong = htonl(msglen);
     write(rtree->socket_num, &netlong, sizeof(int));
-    write_all(rtree->socket_num, buffer, msglen);
+    if(write_all(rtree->socket_num, buffer, msglen) == -1){
+        free(buffer);
+        message_t__free_unpacked(msg, NULL);
+        free(rtree);
+        exit(1);
+    }
 
     free(buffer);
     message_t__free_unpacked(msg, NULL);

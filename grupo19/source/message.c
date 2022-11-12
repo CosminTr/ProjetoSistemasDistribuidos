@@ -1,10 +1,15 @@
 #include "message_private.h"
+#include <signal.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
     Beatriz Silva fc52911
     João Serafim fc56376
 */
+
+void bad_write(int sig){
+    printf("Conexão fechada devido a SIGPIPE. \nFechando o Cliente.\n");
+}
 
 MessageT *message_create(){
     MessageT *msg = (MessageT *) malloc(sizeof(MessageT));
@@ -17,13 +22,13 @@ MessageT *message_create(){
 }
 
 int write_all(int socket_num, uint8_t *buffer, int len) {
+    signal(SIGPIPE, bad_write);
     int ret = len;
     while (len > 0) {
         int resultado = write(socket_num, buffer, len);
         if (resultado < 0) {
             perror("Erro na escrita, write_all \n");
             return resultado;
-
         }
         len -= resultado;
         buffer += resultado;
