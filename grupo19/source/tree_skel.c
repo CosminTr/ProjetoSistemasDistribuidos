@@ -70,28 +70,30 @@ int tree_skel_init(int N) {
 		}
     }
 
-    // //Join--------POTENCIAIS ERROS COM A COLOCACAO DO JOIN
-    // for (int i = 0; i < N; i++){
-    //     if (pthread_join(thread[i], (void**) &r) != 0){
-	// 		printf("\nErro no join\n");
-	// 		exit(EXIT_FAILURE);
-	// 	}
-    // }
+    //Join--------POTENCIAIS ERROS COM A COLOCACAO DO JOIN
+    for (int i = 0; i < N; i++){
+        if (pthread_detach(thread[i]) != 0){
+			printf("\nErro no detach\n");
+			exit(EXIT_FAILURE);
+		}
+    }
     
     return 0;
 }
 
 void tree_skel_destroy() {
-    tree_destroy(rtree);
+    pthread_mutex_lock(&queue_lock);
+    close_threads = 1;
+    pthread_cond_broadcast(&queue_not_empty);
+    pthread_mutex_unlock(&queue_lock);
     free(op_current.in_progress);
     pthread_cond_destroy(&queue_not_empty);
     pthread_mutex_destroy(&queue_lock);
     pthread_mutex_destroy(&tree_lock);
     pthread_mutex_destroy(&op_lock);
-    close_threads = 1;
+    tree_destroy(rtree);
 }
 //NOTA QUAIS OS CASOS DE ERRO PARA SIZE, HEIGHT, VERIFY, PUT, DEL?
-//INCOMPLETA
 int invoke(MessageT *msg) {
     MessageT__Opcode opcode = msg->opcode;
 
@@ -108,7 +110,7 @@ int invoke(MessageT *msg) {
             temporary1->op = 1;
             temporary1->key = malloc(strlen(msg->entry->key)+1);
             strcpy(temporary1->key, msg->entry->key);
-            temporary1->data = data_dup(data_value);
+            temporary1->data = data_value;
             temporary1->next = NULL;
             if(queue_head == NULL)
                 queue_head = temporary1;
@@ -245,49 +247,54 @@ int verify(int op_n) {
     return 0;//False
 }
 
-void *process_request(void *params){ //WHAT ARE THE *PARAMS??
-    while(close_threads == 0){    
-        pthread_mutex_lock(&queue_lock);
-        while(queue_head == NULL)// fila vazia->esperar
-            pthread_cond_wait(&queue_not_empty, &queue_lock);
-        struct request_t *current = queue_head;//pega no elemento do inicio da fila
-        queue_head = current->next;
-        
-        //colocar o id na fila "in_progress"------------
-        pthread_mutex_lock(&op_lock);//talvez um trylock??
-        for(int i = 0; op_current.in_progress[i] != -1; i++)
-            if(op_current.in_progress[i] != 0)
-                op_current.in_progress[i] = current->op_n;
-        pthread_mutex_unlock(&op_lock);
-        //----------------------------------------------
-
-        //processar o current request-------------------
-        if(current->op == 1){//put
-            pthread_mutex_lock(&tree_lock);
-            if(tree_put(rtree, current->key, current->data) == -1)
-                printf("Error inserting entry\n");
-            pthread_mutex_unlock(&tree_lock);
-
-        }else if(current->op == 0){//del
-            pthread_mutex_lock(&tree_lock);
-            if(tree_del(rtree, current->key) == -1)
-                printf("Key not found\n");
-            pthread_mutex_unlock(&tree_lock);
+void *process_request(void *params){ // WHAT ARE THE *PARAMS??
+    pthread_mutex_lock(&queue_lock);
+    while (queue_head == NULL){ // fila vazia->esperar
+        pthread_cond_wait(&queue_not_empty, &queue_lock);
+        if (close_threads == 1){
+            pthread_mutex_unlock(&queue_lock);
+            return NULL;
         }
-        //----------------------------------------------
-        pthread_mutex_lock(&op_lock);
-        if(current->op_n > op_current.max_proc) //substituir max_proc se necessario
-            op_current.max_proc = current->op_n;
-
-        for(int i = 0; op_current.in_progress[i] != -1; i++) //remover id de in_progress
-            if(op_current.in_progress[i] == current->op_n)
-                op_current.in_progress[i] = 0;
-        pthread_mutex_unlock(&op_lock);
-
-        //DAR FREE AO CURRENT??
-        free(current);
-
-        pthread_mutex_unlock(&queue_lock);
     }
-    pthread_exit(NULL);
+    struct request_t *current = queue_head; // pega no elemento do inicio da fila
+    queue_head = current->next;
+
+    // colocar o id na fila "in_progress"------------
+    pthread_mutex_lock(&op_lock); // talvez um trylock??
+    for (int i = 0; op_current.in_progress[i] != -1; i++)
+        if (op_current.in_progress[i] != 0)
+            op_current.in_progress[i] = current->op_n;
+    pthread_mutex_unlock(&op_lock);
+    //----------------------------------------------
+
+    // processar o current request-------------------
+    if (current->op == 1){ // put
+        pthread_mutex_lock(&tree_lock);
+        if (tree_put(rtree, current->key, current->data) == -1)
+            printf("Error inserting entry\n");
+        pthread_mutex_unlock(&tree_lock);
+    }
+    else if (current->op == 0){ // del
+        pthread_mutex_lock(&tree_lock);
+        if (tree_del(rtree, current->key) == -1)
+            printf("Key not found\n");
+        pthread_mutex_unlock(&tree_lock);
+    }
+    //----------------------------------------------
+    pthread_mutex_lock(&op_lock);
+    if (current->op_n > op_current.max_proc) // substituir max_proc se necessario
+        op_current.max_proc = current->op_n;
+
+    for (int i = 0; op_current.in_progress[i] != -1; i++) // remover id de in_progress
+        if (op_current.in_progress[i] == current->op_n)
+            op_current.in_progress[i] = 0;
+    pthread_mutex_unlock(&op_lock);
+
+    // DAR FREE AO CURRENT??
+    free(current->key);
+    data_destroy(current->data);
+    free(current);
+
+    pthread_mutex_unlock(&queue_lock);
+    return NULL;
 }
