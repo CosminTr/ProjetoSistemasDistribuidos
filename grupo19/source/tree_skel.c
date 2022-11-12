@@ -237,6 +237,11 @@ int invoke(MessageT *msg) {
 
 //verifica se op_n esta na lista de in_progress para responmder aos clientes
 int verify(int op_n) {
+    //input invalido: String ou 0, os processos começam a ser identificados por 1.
+    if (op_n == 0) {
+        return -3;
+    }
+    //maior que o identifador do ultimo processado.
     if (op_n > op_current.max_proc)
         return -2;
     //potencial ponto critico para aceder a "in_progress" (talvez fazer no invoke antes de chamar esta funcao)
