@@ -14,12 +14,12 @@ struct tree_t *rtree;
 
 //Multiplexagem-------------
 int last_assigned = 1;
-struct op_proc{        //maybe move this somewhere else
+struct op_proc{     
     int max_proc;
     int *in_progress;// identificadores das operacoes de escrita em execucao
 } op_current;
 
-struct request_t *queue_head = NULL; //INICIALIZAR A NULL?
+struct request_t *queue_head = NULL; 
 
 pthread_mutex_t op_lock;
 pthread_mutex_t tree_lock;
@@ -40,22 +40,22 @@ int tree_skel_init(int N) {
     op_current.in_progress = (int*) calloc(N+1, sizeof(int));
     op_current.in_progress[N] = -1; //terminator
 
-    if(pthread_mutex_init(&op_lock, NULL) != 0){//POTENCIAL MEM LOSS (se der return antes de libertar o resto)
+    if(pthread_mutex_init(&op_lock, NULL) != 0){
         perror(strerror(errno));
         return -1;
     }
     
-    if(pthread_mutex_init(&tree_lock, NULL) != 0){//POTENCIAL MEM LOSS
+    if(pthread_mutex_init(&tree_lock, NULL) != 0){
         perror(strerror(errno));
         return -1;
     }
 
-    if(pthread_mutex_init(&queue_lock, NULL) != 0){//POTENCIAL MEM LOSS
+    if(pthread_mutex_init(&queue_lock, NULL) != 0){
         perror(strerror(errno));
         return -1;
     }
 
-    if(pthread_cond_init(&queue_not_empty, NULL) != 0){//POTENCIAL MEM LOSS
+    if(pthread_cond_init(&queue_not_empty, NULL) != 0){
         perror(strerror(errno));
         return -1;
     }
@@ -70,7 +70,7 @@ int tree_skel_init(int N) {
 		}
     }
 
-    //Join--------POTENCIAIS ERROS COM A COLOCACAO DO JOIN
+    //Detach
     for (int i = 0; i < N; i++){
         if (pthread_detach(thread[i]) != 0){
 			printf("\nErro no detach\n");
@@ -101,8 +101,6 @@ int invoke(MessageT *msg) {
         case MESSAGE_T__OPCODE__OP_PUT: ; //adicionar a fila(request_t queue_head)
             struct data_t *data_value = data_create(msg->entry->data->datasize);
             memcpy(data_value->data, msg->entry->data->data, msg->entry->data->datasize);
-            //NOTA por o lock ca em cima OU antes de while mas colocar 
-            //o temporary = last_assigned la dentro pra garantir
             pthread_mutex_lock(&queue_lock);
             //coloca elemento no fim da fila
             struct request_t *temporary1 = (struct request_t *) malloc(sizeof(struct request_t));
@@ -145,8 +143,6 @@ int invoke(MessageT *msg) {
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_DEL: //adicionar a fila(request_t queue_head)
-            //NOTA por o lock ca em cima OU antes de while mas colocar 
-            //o temporary = last_assigned la dentro pra garantir
             pthread_mutex_lock(&queue_lock);
             //coloca elemento no fim da fila
             
@@ -252,7 +248,7 @@ int verify(int op_n) {
     return 0;//False
 }
 
-void *process_request(void *params){ // WHAT ARE THE *PARAMS??
+void *process_request(void *params){ 
     pthread_mutex_lock(&queue_lock);
     while (queue_head == NULL){ // fila vazia->esperar
         pthread_cond_wait(&queue_not_empty, &queue_lock);
@@ -265,7 +261,7 @@ void *process_request(void *params){ // WHAT ARE THE *PARAMS??
     queue_head = current->next;
 
     // colocar o id na fila "in_progress"------------
-    pthread_mutex_lock(&op_lock); // talvez um trylock??
+    pthread_mutex_lock(&op_lock); 
     for (int i = 0; op_current.in_progress[i] != -1; i++)
         if (op_current.in_progress[i] != 0)
             op_current.in_progress[i] = current->op_n;
@@ -295,7 +291,7 @@ void *process_request(void *params){ // WHAT ARE THE *PARAMS??
             op_current.in_progress[i] = 0;
     pthread_mutex_unlock(&op_lock);
 
-    // DAR FREE AO CURRENT??
+    //dar free ao current
     free(current->key);
     data_destroy(current->data);
     free(current);

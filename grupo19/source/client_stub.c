@@ -235,14 +235,12 @@ void **rtree_get_values(struct rtree_t *rtree){
 
 int rtree_verify(struct rtree_t *rtree, int op_n) {
 
-    //Usar mais op_n?
-
     MessageT *msg = message_create();
     if (msg == NULL) {
         printf("Erro ao criar mensagem, c_s_verify\n");
         return -1;
     }
-    msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY; //Unsure, needs new compiling
+    msg->opcode = MESSAGE_T__OPCODE__OP_VERIFY;
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; 
     msg->op_n = op_n;
 

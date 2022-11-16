@@ -15,17 +15,21 @@ void close_free(int sig){
     exit(1);
 }
 
+int client_sigpipe_flag = 0;
+
+void client_sigpipe(int sig){
+    client_sigpipe_flag = 1;
+}
+
 struct sockaddr_in server, client;
 int sockfd, connsockfd;
 socklen_t size_client;
 
-int nfdesc; //número de sockets para clientes + 1 para o Listen....possivelmente fazer const
+const int nfdesc = 10; //número de sockets para clientes + 1 para o Listen
 
 int network_server_init(short port) {
 
     signal(SIGINT, close_free);
-
-    nfdesc = 2; //maybe? possivelmente fazer uma constante
     
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("Erro ao criar socket\n");
@@ -58,15 +62,16 @@ int network_server_init(short port) {
 
 int network_main_loop(int listening_socket){
     signal(SIGINT, close_free);
+    signal(SIGPIPE, SIG_IGN);
     
-    //vars for multiplexing
+    //vars for polling
     struct pollfd conns[nfdesc];
-    int nfds, kfds, i;
+    int nfds, i;
 
-    //inicializar os FileDescriptors das conns a -1
+    //inicializar os FileDescriptors e revents das conns a -1
     for(i = 0; i < nfdesc; i++){
         conns[i].fd = -1;// poll ignora estruturas com fd < 0
-        conns[i].revents = 0; //fix a um erro que colocava um revent a != 0
+        conns[i].revents = 0; //revents colocadas a 0 para evitar erros de inicializacao
     }
     //Listening socket será a conns[0]
     conns[0].fd = sockfd;
@@ -74,92 +79,61 @@ int network_main_loop(int listening_socket){
 
     nfds = 1; //número de FileDescriptors
 
-    //While que fica a espera de eventos... Não há TIMEOUT?
-    while((kfds = poll(conns, nfds, -1)) >= 0){ //NOTA poll devolve 0 se timeout ou >0(número de descritores com eventos) 
-        if(kfds > 0){ //numero de descritores com evento ou erro
-            
-            if((conns[0].revents & POLLIN) && (nfds < nfdesc)){//recebeu ligacao
-                printf("Cliente Conetado!\n");
-                if((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
-                   conns[nfds].fd = connsockfd; //TALVEZ DAR MERGE COM A LINHA DE CIMA
-                   conns[nfds].events = POLLIN; 
-                   nfds++;
-                }
+    //While que fica a espera de eventos... Não há TIMEOUT
+    while(poll(conns, nfds, 10) >= 0){ //poll devolve >0(número de descritores com eventos)
+        if ((conns[0].revents & POLLIN) && (nfds < nfdesc))
+        { // recebeu ligacao
+            printf("Cliente Conetado!\n");
+            if ((connsockfd = accept(listening_socket, (struct sockaddr *)&client, &size_client)) != -1){
+                conns[nfds].fd = connsockfd;
+                conns[nfds].events = POLLIN;
+                nfds++;
             }
-            for(i = 1; i < nfdesc; i++){
-                if(conns[i].revents & POLLIN){
-                    MessageT *mss = network_receive(conns[i].fd);
-                    //client dá quit
-                    if(mss == NULL){
-                        printf("Cliente Desconetou-se\n");
-                        message_t__free_unpacked(mss, NULL);
-                        close(conns[i].fd);
-                        conns[i].fd = -1;//remove client from conns
-                        nfds--;
-                        continue;
-                    }else{
-                        if(invoke(mss) == -1)
-                            printf("Ocorreu um erro ao executar o pedido\n");
-                        
-                        //envia a mensagem ao cliente
-                        if(network_send(conns[i].fd, mss) == -1){
-                            close(conns[i].fd);//POTENCIAL DE DAR ERRADO
-                            conns[i].fd = -1;//remove client from conns
-                            nfds--;
-                            continue;
-                            //return -1;//PENSO NAO SER NECESSARIO(pq operacao continua sem esse client)
-                        }
-                    }
-                }
-                if((conns[i].revents & POLL_ERR) || (conns[i].revents & POLL_HUP)){
+        }
+        for (i = 1; i < nfdesc; i++){
+            if (conns[i].revents & POLLIN){
+                MessageT *mss = network_receive(conns[i].fd);
+                if (mss == NULL){ // client dá quit
+                    printf("Cliente Desconetou-se\n");
+                    message_t__free_unpacked(mss, NULL);
                     close(conns[i].fd);
-                    conns[i].fd = -1; //remove client from conns
-                    nfds--; 
+                    conns[i].fd = -1; // remove client from conns
+                    conns[i].revents = 0;
                     continue;
                 }
-            }
-        } 
-    }
-    return 0; //INCERTO QUANTO A ONDE POR ESTA PARTE
+                else{
+                    if (invoke(mss) == -1){
+                        printf("Ocorreu um erro ao executar o pedido\n");
+                        continue;
+                    }
 
-    /*loop antigo(proj2)
-    while((connsockfd = accept(listening_socket,(struct sockaddr *) &client, &size_client)) != -1){
-        printf("Cliente Conetou-se\n");
-        
-        int client_running = 1;
-        while (client_running == 1){
-            MessageT *mss = network_receive(connsockfd);
-            
-
-            //client dá quit
-            if(mss == NULL){
-                printf("Cliente Desconetou-se\n");
-                message_t__free_unpacked(mss, NULL);
-                client_running = 0;
-                close(connsockfd);
-                continue;
+                    // envia a mensagem ao cliente
+                    if (network_send(conns[i].fd, mss) == -1){
+                        close(conns[i].fd);
+                        conns[i].fd = -1; // remove client from conns
+                        conns[i].revents = 0;
+                        continue;
+                    }
+                }
             }
-            
-            if(invoke(mss) == -1){
-                printf("Ocorreu um erro ao executar o pedido\n");
+            if ((conns[i].revents & POLL_ERR) || (conns[i].revents & POLL_HUP)){
+                close(conns[i].fd);
+                conns[i].fd = -1; // remove client from conns
+                conns[i].revents = 0;
                 continue;
-            }
-            
-            //envia a mensagem ao cliente
-            if(network_send(connsockfd, mss) == -1){
-                close(connsockfd);
-                return -1;
             }
         }
     }
-    return 0;*/
+    return 0; 
 }
 
 
-MessageT *network_receive(int client_socket) {
+MessageT *network_receive(int client_socket) { 
     int msglen;
     int res;
-    if ((res = read(client_socket, &msglen, sizeof(int))) == 0) {
+    res = read(client_socket, &msglen, sizeof(int));
+    printf("RES: %d\n", res);
+    if (res == 0 || res == -1) {
         return NULL;
     }
     msglen = ntohl(msglen);

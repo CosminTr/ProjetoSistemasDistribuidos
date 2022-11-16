@@ -161,17 +161,15 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
                 int op_n = atoi(temp);
+                if(op_n <= 0)
+                    printf("Input para verificação invalido, certifique-se que inseriu um valor superior ou igual a 1.\n");
 
                 int result = rtree_verify(tree, op_n);
                 if(result == -1)
                     printf("Erro na verificação, t_c_verify\n");
                 else {
-                    if(result == -3)
-                        printf("Input para verificação invalido, certifique-se que inseriu um valor superior ou igual a 1.\n");
                     if(result == -2)
                         printf("A operacao identificada por %d não está na lista de espera nem foi executada.\n", op_n);
-                    if(result == -2)
-                        printf("A operacao identificada por %d não está na lista de espera nem foi executada\n", op_n);
                     if(result == 0)
                         printf("A operacao identificada por %d não está na lista de espera logo foi executada.\n", op_n);
                     else if(result == 1)
