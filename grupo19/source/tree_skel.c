@@ -86,6 +86,8 @@ void tree_skel_destroy() {
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
     pthread_mutex_unlock(&queue_lock);
+    printf("\nEsperando que todos os processos do servidor se fechem (5 segundos)\n");
+    sleep(5);
     free(op_current.in_progress);
     pthread_cond_destroy(&queue_not_empty);
     pthread_mutex_destroy(&queue_lock);
