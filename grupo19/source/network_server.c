@@ -79,8 +79,8 @@ int network_main_loop(int listening_socket){
 
     nfds = 1; //número de FileDescriptors
 
-    //While que fica a espera de eventos... Não há TIMEOUT
-    while(poll(conns, nfds, 10) >= 0){ //poll devolve >0(número de descritores com eventos)
+    //While que fica a espera de eventos...Nao ha timeout 
+    while(poll(conns, nfds, -1) >= 0){ //poll devolve >0(número de descritores com eventos)
         if ((conns[0].revents & POLLIN) && (nfds < nfdesc))
         { // recebeu ligacao
             printf("Cliente Conetado!\n");
@@ -132,7 +132,6 @@ MessageT *network_receive(int client_socket) {
     int msglen;
     int res;
     res = read(client_socket, &msglen, sizeof(int));
-    printf("RES: %d\n", res);
     if (res == 0 || res == -1) {
         return NULL;
     }

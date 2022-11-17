@@ -7,10 +7,6 @@
     João Serafim fc56376
 */
 
-void bad_write(int sig){
-    printf("Conexão fechada devido a SIGPIPE. \nFechando o Cliente.\n");
-}
-
 MessageT *message_create(){
     MessageT *msg = (MessageT *) malloc(sizeof(MessageT));
     message_t__init(msg);
@@ -22,7 +18,7 @@ MessageT *message_create(){
 }
 
 int write_all(int socket_num, uint8_t *buffer, int len) {
-    signal(SIGPIPE, bad_write);
+    signal(SIGPIPE, SIG_IGN);
     int ret = len;
     while (len > 0) {
         int resultado = write(socket_num, buffer, len);
