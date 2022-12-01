@@ -161,3 +161,7 @@ int network_server_close(){
     close(sockfd);
     return 0;
 }
+
+int network_zk_init(int *zk_addr, int port) {
+    
+}

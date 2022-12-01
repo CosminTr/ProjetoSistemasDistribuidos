@@ -10,6 +10,10 @@
     João Serafim fc56376
 */
 
+//zookeeper stuff
+typedef struct String_vector zoo_string; 
+struct rtree_t *zk_tree;
+//
 struct tree_t *rtree;
 
 //Multiplexagem-------------
@@ -62,6 +66,12 @@ int tree_skel_init(int N) {
 
     pthread_t thread[N];
 
+    //ZK stuff?    bazado em zoo.c
+    //ERRO WHY
+    zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
+    //
+    zk_tree = (struct rtree_t *) malloc(sizeof(struct rtree_t *));
+    
     //Create
     for (int i = 0; i < N; i++){
         if (pthread_create(&thread[i], NULL, &process_request, NULL) != 0){

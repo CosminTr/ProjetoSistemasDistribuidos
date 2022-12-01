@@ -20,6 +20,9 @@ int main(int argc, char * argv[]){
         perror("Erro ao inicializar tree: \n");
         return -1;
     }
+    //zk here
+    network_zk_init(tree, server_socket);
+
     network_main_loop(server_socket);
     network_server_close();
 
