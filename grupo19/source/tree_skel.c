@@ -66,10 +66,8 @@ int tree_skel_init(int N) {
 
     pthread_t thread[N];
 
-    //ZK stuff?    bazado em zoo.c
-    //ERRO WHY
+    //ZK stuff?    maybe move to start_ts_zk
     zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
-    //
     zk_tree = (struct rtree_t *) malloc(sizeof(struct rtree_t *));
     
     //Create
@@ -310,4 +308,23 @@ void *process_request(void *params){
 
     pthread_mutex_unlock(&queue_lock);
     return NULL;
+}
+//from zdatawatcher.c
+void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, void* context) {
+	if (type == ZOO_SESSION_EVENT) {
+		if (state == ZOO_CONNECTED_STATE) {
+			zk_tree->is_connected = 1; 
+		} else {
+			zk_tree->is_connected = 0; 
+		}
+	} 
+}
+
+int start_ts_zk(int zk_addr, int port) {
+    zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
+    if (zk_tree->zh == NULL) {
+        printf("Erro ao connectar com o servidor Zookeeper, t_s, (zookeeper_init) \n");
+        return -1;
+    }
+
 }

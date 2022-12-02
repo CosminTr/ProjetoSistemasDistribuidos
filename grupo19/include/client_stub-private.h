@@ -7,5 +7,8 @@ struct rtree_t {
     //CONFIRM
     char *zk_identifier;
     char *zk_next_id;
+    //zdatawatcher.c
+    zhandle_t *zh;
+    int is_connected;
 
 };
