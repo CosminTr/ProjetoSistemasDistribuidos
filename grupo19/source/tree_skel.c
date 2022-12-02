@@ -10,10 +10,13 @@
     João Serafim fc56376
 */
 
-//zookeeper stuff
+//zookeeper stuff ------------------------
 typedef struct String_vector zoo_string; 
+zoo_string *children_list;
 struct rtree_t *zk_tree;
-//
+/* TODO */
+const char *zoo_path = "TODO"
+// ----------------------------------------
 struct tree_t *rtree;
 
 //Multiplexagem-------------
@@ -67,7 +70,7 @@ int tree_skel_init(int N) {
     pthread_t thread[N];
 
     //ZK stuff?    maybe move to start_ts_zk
-    zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
+    children_list = (zoo_string *) malloc(sizeof(zoo_string));
     zk_tree = (struct rtree_t *) malloc(sizeof(struct rtree_t *));
     
     //Create
@@ -309,7 +312,7 @@ void *process_request(void *params){
     pthread_mutex_unlock(&queue_lock);
     return NULL;
 }
-//from zdatawatcher.c
+//from zchildwatcher.c
 void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, void* context) {
 	if (type == ZOO_SESSION_EVENT) {
 		if (state == ZOO_CONNECTED_STATE) {
@@ -319,12 +322,35 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 		}
 	} 
 }
+//from zchildwatcher.c
+//TODO pode não estar completo
+static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx) {
+	children_list =	(zoo_string *) malloc(sizeof(zoo_string));
+	int zoo_data_len = ZDATALEN;
+	if (state == ZOO_CONNECTED_STATE)	 {
+		if (type == ZOO_CHILD_EVENT) {
+	 	   /* Get the updated children and reset the watch */ 
+ 			if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, child_watcher, watcher_ctx, children_list)) {
+ 				fprintf(stderr, "Error setting watch at %s!\n", zoo_path);
+ 			}
+			fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
+			for (int i = 0; i < children_list->count; i++)  {
+				fprintf(stderr, "\n(%d): %s", i+1, children_list->data[i]);
+			}
+			fprintf(stderr, "\n=== done ===\n");
+		 } 
+	 }
+	 free(children_list);
+}
 
+//from zoo.c, zchildwatcher.c ...
 int start_ts_zk(int zk_addr, int port) {
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
+    
     if (zk_tree->zh == NULL) {
         printf("Erro ao connectar com o servidor Zookeeper, t_s, (zookeeper_init) \n");
         return -1;
     }
-
+    sleep(5); //dorme para conectar
+    
 }
