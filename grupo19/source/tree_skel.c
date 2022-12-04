@@ -351,6 +351,13 @@ int start_ts_zk(int zk_addr, int port) {
         printf("Erro ao connectar com o servidor Zookeeper, t_s, (zookeeper_init) \n");
         return -1;
     }
-    sleep(5); //dorme para conectar
+    sleep(3); //dorme para conectar
+    
+    children_list = (zoo_string *) malloc(sizeof(zoo_string));
+    int retval = zoo_get_children(zh, zoo_path, 0 , children_list);
+    if (retval != ZOK) {
+        printf("Erro ao obter znode do caminho, %s \n", zoo_path);
+        return -1;
+    }
     
 }
