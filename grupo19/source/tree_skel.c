@@ -3,6 +3,8 @@
 #include <errno.h>
 #include "message_private.h"
 #include <pthread.h>
+#include "zookeeper/zookeeper.h"
+#include "client_stub-private.h"
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -11,6 +13,7 @@
 */
 
 //zookeeper stuff ------------------------
+#define ZDATALEN 1024 * 1024
 typedef struct String_vector zoo_string; 
 zoo_string *children_list;
 struct rtree_t *zk_tree;
@@ -357,7 +360,7 @@ int start_ts_zk(int zk_addr, int port) {
         //se nao existe chain, criar
         if(ZNONODE == zoo_exists(zk_tree->zh, zoo_path, 0, NULL)) {
             //criar chain
-            if (ZOK == zoo_create(zk_tree->zh, zoo_path, NULL, -1, &ZOO_OPEN_ACL_UNSAFE, 0 NULL, 0)) {
+            if (ZOK == zoo_create(zk_tree->zh, zoo_path, NULL, -1, &ZOO_OPEN_ACL_UNSAFE, 0, NULL, 0)) {
                 printf("criado o nó chain. \n");
             } else {
                 printf("Erro ao criar o node chain \n");
@@ -368,7 +371,7 @@ int start_ts_zk(int zk_addr, int port) {
     
         //os putos
         children_list = (zoo_string *) malloc(sizeof(zoo_string));
-        int retval = zoo_get_children(zh, zoo_path, 0 , children_list);
+        int retval = zoo_get_children(zk_tree->zh, zoo_path, 0 , children_list);
         if (retval != ZOK) {
             printf("Erro ao obter znode do caminho, %s \n", zoo_path);
             return -1;
