@@ -14,7 +14,8 @@
 typedef struct String_vector zoo_string; 
 zoo_string *children_list;
 struct rtree_t *zk_tree;
-const char *zoo_path = "/chain"
+const char *zoo_path = "/chain";
+static char *watcher_ctx = "ZooKeeper Data Watcher";
 // ----------------------------------------
 struct tree_t *rtree;
 
@@ -363,13 +364,20 @@ int start_ts_zk(int zk_addr, int port) {
                 return -1;
             }
         }
-    }
     
-    children_list = (zoo_string *) malloc(sizeof(zoo_string));
-    int retval = zoo_get_children(zh, zoo_path, 0 , children_list);
-    if (retval != ZOK) {
-        printf("Erro ao obter znode do caminho, %s \n", zoo_path);
-        return -1;
-    }
     
+        //os putos
+        children_list = (zoo_string *) malloc(sizeof(zoo_string));
+        int retval = zoo_get_children(zh, zoo_path, 0 , children_list);
+        if (retval != ZOK) {
+            printf("Erro ao obter znode do caminho, %s \n", zoo_path);
+            return -1;
+        }
+    
+        if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, &child_watcher, watcher_ctx, children_list)) {
+            printf("Erro ao criar um watcher para /chain");
+        }
+        return 0;
+    }
+    return -1;
 }
