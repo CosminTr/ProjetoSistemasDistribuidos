@@ -14,8 +14,7 @@
 typedef struct String_vector zoo_string; 
 zoo_string *children_list;
 struct rtree_t *zk_tree;
-/* TODO */
-const char *zoo_path = "TODO"
+const char *zoo_path = "/chain"
 // ----------------------------------------
 struct tree_t *rtree;
 
@@ -352,6 +351,19 @@ int start_ts_zk(int zk_addr, int port) {
         return -1;
     }
     sleep(3); //dorme para conectar
+
+    if (zk_tree->is_connected) {
+        //se nao existe chain, criar
+        if(ZNONODE == zoo_exists(zk_tree->zh, zoo_path, 0, NULL)) {
+            //criar chain
+            if (ZOK == zoo_create(zk_tree->zh, zoo_path, NULL, -1, &ZOO_OPEN_ACL_UNSAFE, 0 NULL, 0)) {
+                printf("criado o nó chain. \n");
+            } else {
+                printf("Erro ao criar o node chain \n");
+                return -1;
+            }
+        }
+    }
     
     children_list = (zoo_string *) malloc(sizeof(zoo_string));
     int retval = zoo_get_children(zh, zoo_path, 0 , children_list);
