@@ -12,6 +12,14 @@
 
 struct rtree_t *tree_remota;
 
+/* Zookeeper stuff */
+struct rtree_t head;
+struct rtree_t tail;
+typedef struct String_vector zoo_string; 
+zoo_string *children_list;
+
+/* --------------- */
+
 void close_free(int sig){
     rtree_disconnect(tree_remota);
     printf("Cliente fechou devido a Ctrl+C\n");
@@ -252,4 +260,18 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
 
     message_t__free_unpacked(msg, NULL);
     return result;
+}
+
+void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, void* context) {
+	if (type == ZOO_SESSION_EVENT) {
+		if (state == ZOO_CONNECTED_STATE) {
+			is_connected = 1; 
+		} else {
+			is_connected = 0; 
+		}
+	} 
+}
+
+int start_cs_zk(char * zk_addr) {
+
 }

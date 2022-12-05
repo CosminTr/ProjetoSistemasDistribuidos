@@ -29,8 +29,9 @@ int main(int argc, char *argv[]) {
         printf("Input errado!\n Deve introduzir: ./client <server>:<port>\n");
         return -1;
     }
-
-    tree = rtree_connect((char *)argv[1]);
+    // old
+    //tree = rtree_connect((char *)argv[1]);
+    start_cs_zk((char *)argv[1]);
 
     char* pedido;
     int maxSize = 128; 
