@@ -21,7 +21,7 @@ int main(int argc, char * argv[]){
         return -1;
     }
     //zk here
-    network_zk_init(tree, server_socket);
+    network_zk_init(server_socket);
 
     network_main_loop(server_socket);
     network_server_close();

@@ -162,9 +162,9 @@ int network_server_close(){
     return 0;
 }
 
-int network_zk_init(int *zk_addr, int port) {
+int network_zk_init(int *zk_addr) {
     //Iniciado em tree_skell.c
-    int val = start_ts_zk(zk_addr, port);
+    int val = start_ts_zk(zk_addr);
     if ( val == -1) {
         printf("Erro ao iniciar o Zookeeper, t_s");
         return val;

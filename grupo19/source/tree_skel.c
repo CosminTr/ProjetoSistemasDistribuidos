@@ -347,7 +347,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
 }
 
 //from zoo.c, zchildwatcher.c ...
-int start_ts_zk(int zk_addr, int port) {
+int start_ts_zk(int zk_addr) {
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
     
     if (zk_tree->zh == NULL) {
