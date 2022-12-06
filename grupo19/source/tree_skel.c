@@ -29,6 +29,8 @@ int hostname;
 struct tree_t *rtree;
 
 //Multiplexagem-------------
+pthread_t thread;
+
 int last_assigned = 1;
 struct op_proc{     
     int max_proc;
@@ -44,17 +46,14 @@ pthread_cond_t queue_not_empty;
 
 int close_threads = 0;
 //----------------------------
-
-
-int tree_skel_init(int N) {
+int tree_skel_init() {
     rtree = tree_create();
     if(rtree == NULL) {
         perror("Erro ao iniciar a tree - t_s_i");
         return -1;
     }
 
-    op_current.in_progress = (int*) calloc(N+1, sizeof(int));
-    op_current.in_progress[N] = -1; //terminator
+    op_current.in_progress = (int*) calloc(1, sizeof(int));
 
     if(pthread_mutex_init(&op_lock, NULL) != 0){
         perror(strerror(errno));
@@ -76,27 +75,15 @@ int tree_skel_init(int N) {
         return -1;
     }
 
-    pthread_t thread[N];
-
     //ZK stuff?    maybe move to start_ts_zk
     children_list = (zoo_string *) malloc(sizeof(zoo_string));
     zk_tree = (struct rtree_t *) malloc(sizeof(struct rtree_t *));
     
     //Create
-    for (int i = 0; i < N; i++){
-        if (pthread_create(&thread[i], NULL, &process_request, NULL) != 0){
-			printf("\nThread %d não criada.\n", i);
-			exit(EXIT_FAILURE);
-		}
-    }
-
-    //Detach
-    for (int i = 0; i < N; i++){
-        if (pthread_detach(thread[i]) != 0){
-			printf("\nErro no detach\n");
-			exit(EXIT_FAILURE);
-		}
-    }
+    if (pthread_create(&thread, NULL, &process_request, NULL) != 0){
+		printf("\nThread não criada.\n");
+		exit(EXIT_FAILURE);
+	}
     
     return 0;
 }
@@ -106,8 +93,7 @@ void tree_skel_destroy() {
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
     pthread_mutex_unlock(&queue_lock);
-    printf("\nEsperando que todos os processos do servidor se fechem (5 segundos)\n");
-    sleep(5);
+    pthread_join(thread, NULL);
     free(op_current.in_progress);
     pthread_cond_destroy(&queue_not_empty);
     pthread_mutex_destroy(&queue_lock);
@@ -263,13 +249,13 @@ int verify(int op_n) {
     if (op_n > op_current.max_proc)
         return -2;
     //potencial ponto critico para aceder a "in_progress" (talvez fazer no invoke antes de chamar esta funcao)
-    for (int i = 0; op_current.in_progress[i] != -1; i++){
-        if(op_current.in_progress[i] == op_n)
+    if(op_current.in_progress == op_n)
         return 1;//True
-    }
+    
     return 0;//False
 }
 
+//preciso mudar locks?
 void *process_request(void *params){ 
     pthread_mutex_lock(&queue_lock);
     while (queue_head == NULL){ // fila vazia->esperar

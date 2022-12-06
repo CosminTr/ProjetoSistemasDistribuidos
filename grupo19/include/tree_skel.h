@@ -14,6 +14,19 @@ struct request_t {
     struct request_t *next;
 };
 
+struct rtree_t {
+    struct sockaddr_in server_socket; 
+    int socket_num;
+
+    //CONFIRM
+    char *zk_identifier;
+    char *zk_next_id;
+
+    zhandle_t *zh;
+    int is_connected;
+
+};
+
 /* Inicia o skeleton da árvore.
  * O main() do servidor deve chamar esta função antes de poder usar a
  * função invoke(). 
@@ -21,7 +34,7 @@ struct request_t {
  * pedidos de escrita na árvore.
  * Retorna 0 (OK) ou -1 (erro, por exemplo OUT OF MEMORY)
 */
-int tree_skel_init(int N);
+int tree_skel_init();
 
 /* Liberta toda a memória e recursos alocados pela função tree_skel_init.
  */
