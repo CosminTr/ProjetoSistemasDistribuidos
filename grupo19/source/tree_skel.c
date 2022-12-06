@@ -4,6 +4,7 @@
 #include "message_private.h"
 #include <pthread.h>
 #include "zookeeper/zookeeper.h"
+#include <netdb.h>
 #include "client_stub-private.h"
 
 /*Trabalho realizado por 
@@ -19,6 +20,11 @@ zoo_string *children_list;
 struct rtree_t *zk_tree;
 const char *zoo_path = "/chain";
 static char *watcher_ctx = "ZooKeeper Data Watcher";
+
+char hostbuf[256];
+char *IPbuf;
+struct hostent *host_entry;
+int hostname;
 // ----------------------------------------
 struct tree_t *rtree;
 
@@ -380,6 +386,10 @@ int start_ts_zk(int zk_addr) {
         if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, &child_watcher, watcher_ctx, children_list)) {
             printf("Erro ao criar um watcher para /chain");
         }
+        hostname = gethostname(hostbuf, sizeof(hostbuf));
+        host_entry = gethostbyname(hostbuf);
+        //hostbuf: nome / IPbuf: XX.XX.XX.XXX
+        IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
         return 0;
     }
     return -1;
