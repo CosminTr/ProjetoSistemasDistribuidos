@@ -54,4 +54,6 @@ int verify(int op_n);
 */
 void *process_request(void *params);
 
+int start_ts_zk(char *zk_addr, int serverPort);
+
 #endif

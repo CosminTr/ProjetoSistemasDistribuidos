@@ -5,7 +5,8 @@
 #include <pthread.h>
 #include "zookeeper/zookeeper.h"
 #include <netdb.h>
-#include "client_stub-private.h"
+//#include "client_stub-private.h"
+#include <string.h>
 
 /*Trabalho realizado por 
     Cosmin Trandafir fc57101
@@ -20,7 +21,9 @@ zoo_string *children_list;
 struct rtree_t *zk_tree;
 const char *zoo_path = "/chain";
 static char *watcher_ctx = "ZooKeeper Data Watcher";
-
+int new_path_len = 1024;
+char* new_path;
+//getting server IP-----------------------
 char hostbuf[256];
 char *IPbuf;
 struct hostent *host_entry;
@@ -89,6 +92,7 @@ int tree_skel_init() {
 }
 
 void tree_skel_destroy() {
+    //free(new_path);
     pthread_mutex_lock(&queue_lock);
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
@@ -328,18 +332,44 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
  			if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, child_watcher, watcher_ctx, children_list)) {
  				fprintf(stderr, "Error setting watch at %s!\n", zoo_path);
  			}
-			fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
-			for (int i = 0; i < children_list->count; i++)  {
-				fprintf(stderr, "\n(%d): %s", i+1, children_list->data[i]);
-			}
-			fprintf(stderr, "\n=== done ===\n");
-		 } 
-	 }
-	 free(children_list);
+			//encontrar o proximo node
+            //PODE DAR PROBLEMA NO COMPARE
+            char *next = malloc(new_path_len);
+            strcpy(next, "0");
+            fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
+		    for (int i = 0; i < children_list->count; i++)  {
+			if(strcmp(next, "0")==0 && strcmp(children_list->data[i], new_path)>0)
+                strcpy(next, children_list->data[i]);
+            if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
+                strcpy(next, children_list->data[i]);
+		}
+		fprintf(stderr, "\n=== done ===\n");
+
+        //pode dar um problema de memoria
+        zk_tree->zk_next_id = next;
+        zk_tree->zk_identifier = new_path;
+		} 
+	}
+	free(children_list);
 }
 
 //from zoo.c, zchildwatcher.c ...
-int start_ts_zk(int zk_addr) {
+int start_ts_zk(char *zk_addr, int serverPort) {
+    //serverInfo------------
+    hostname = gethostname(hostbuf, sizeof(hostbuf));
+    host_entry = gethostbyname(hostbuf);
+    //hostbuf: nome / IPbuf: XX.XX.XX.XXX
+    IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
+    
+    char *port = malloc(4 * sizeof(char));
+    char *serverInfo = malloc(12 * sizeof(char));
+    sptrintf(port, "%d", serverPort);
+    strcpy(serverInfo, IPbuf);
+    strcat(serverInfo, ":");
+    strcat(serverInfo, port);
+    free(port);
+    //----------------
+    
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
     
     if (zk_tree->zh == NULL) {
@@ -359,8 +389,19 @@ int start_ts_zk(int zk_addr) {
                 return -1;
             }
         }
-    
-    
+        //criar node de server atual
+        char node_path[120] = "";
+		strcat(node_path,zoo_path); 
+		strcat(node_path,"/node"); 
+
+        //nome do nosso Znode depois de criado
+		new_path = malloc (new_path_len);
+        
+        if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 10, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
+				fprintf(stderr, "Error creating znode from path %s!\n", node_path);
+			    exit(EXIT_FAILURE);
+		}
+
         //os putos
         children_list = (zoo_string *) malloc(sizeof(zoo_string));
         int retval = zoo_get_children(zk_tree->zh, zoo_path, 0 , children_list);
@@ -368,14 +409,28 @@ int start_ts_zk(int zk_addr) {
             printf("Erro ao obter znode do caminho, %s \n", zoo_path);
             return -1;
         }
-    
+        
         if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, &child_watcher, watcher_ctx, children_list)) {
             printf("Erro ao criar um watcher para /chain");
         }
-        hostname = gethostname(hostbuf, sizeof(hostbuf));
-        host_entry = gethostbyname(hostbuf);
-        //hostbuf: nome / IPbuf: XX.XX.XX.XXX
-        IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
+
+        //encontrar o proximo node
+        //PODE DAR PROBLEMA NO COMPARE
+        char *next = malloc(new_path_len);
+        strcpy(next, "0");
+        fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
+		for (int i = 0; i < children_list->count; i++)  {
+			if(strcmp(next, "0")==0 && strcmp(children_list->data[i], new_path)>0)
+                strcpy(next, children_list->data[i]);
+            if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
+                strcpy(next, children_list->data[i]);
+		}
+		fprintf(stderr, "\n=== done ===\n");
+        free(children_list);
+        //pode dar um problema de memoria
+        zk_tree->zk_next_id = next;
+        zk_tree->zk_identifier = new_path;
+        
         return 0;
     }
     return -1;
