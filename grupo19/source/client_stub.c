@@ -27,9 +27,7 @@ static char *watcher_ctx = "ZooKeeper Data Watcher";
 
 //Preciso uma vez que ZNode é efemero?
 void close_free(int sig){
-    rtree_disconnect(head);
-    rtree_disconnect(tail);
-    rtree_disconnect(zkConn);
+    rtree_disconnect(zkConn);//nao interessa o parametro
     printf("Cliente fechou devido a Ctrl+C\n");
     exit(1);
 }
@@ -148,9 +146,16 @@ struct rtree_t *rtree_connect(const char *address_port){
     return ZKservers;
 }
 int rtree_disconnect(struct rtree_t *rtree) {
-    if (network_close(rtree) != 0)
+    if (network_close(head) != 0)
+        return -1;
+    if (network_close(tail) != 0)
+        return -1;
+    if (network_close(zkConn) != 0)
         return -1;
     
+    free(head);
+    free(tail);
+    free(children_list);
     free(zkConn);
     return 0;
 }
@@ -183,7 +188,7 @@ int rtree_put(struct rtree_t *rtree, struct entry_t *entry){
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
     
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(head, msg);
     //Verificar se deu td correto
     if(msg == NULL)
         return -1;
@@ -215,7 +220,7 @@ struct data_t *rtree_get(struct rtree_t *rtree, char *key){
     msg->opcode = MESSAGE_T__OPCODE__OP_GET;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
 
     if(msg == NULL)
         return NULL;
@@ -245,7 +250,7 @@ int rtree_del(struct rtree_t *rtree, char *key){
     msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(head, msg);
     if(msg == NULL)
         return -1;
 
@@ -263,7 +268,7 @@ int rtree_size(struct rtree_t *rtree){
     msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
     if(msg == NULL)
         return -1;
     
@@ -280,7 +285,7 @@ int rtree_height(struct rtree_t *rtree){
     msg->opcode = MESSAGE_T__OPCODE__OP_HEIGHT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
     if (msg == NULL)
         return -1;
 
@@ -297,7 +302,7 @@ char **rtree_get_keys(struct rtree_t *rtree){
     msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
     if (msg == NULL)
         return NULL;
 
@@ -321,7 +326,7 @@ void **rtree_get_values(struct rtree_t *rtree){
     msg->opcode = MESSAGE_T__OPCODE__OP_GETVALUES;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
     if (msg == NULL)
         return NULL;
 
@@ -349,7 +354,7 @@ int rtree_verify(struct rtree_t *rtree, int op_n) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT; 
     msg->op_n = op_n;
 
-    msg = network_send_receive(rtree, msg);
+    msg = network_send_receive(tail, msg);
     if(msg == NULL) 
         return -1;
     
