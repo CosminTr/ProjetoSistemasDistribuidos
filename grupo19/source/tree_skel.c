@@ -253,7 +253,7 @@ int verify(int op_n) {
     if (op_n > op_current.max_proc)
         return -2;
     //potencial ponto critico para aceder a "in_progress" (talvez fazer no invoke antes de chamar esta funcao)
-    if(op_current.in_progress == op_n)
+    if(*op_current.in_progress == op_n)
         return 1;//True
     
     return 0;//False
