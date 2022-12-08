@@ -4,7 +4,7 @@ INC_DIR = include
 BIN_DIR = binary
 OBJ_DIR = object
 LIB_DIR = lib
-CFLAGS = -g -Wall -I 
+CFLAGS = -D THREADED -g -Wall -I 
 COMPILE  = $(CC) $(CFLAGS) $(INC_DIR) -o $(OBJ_DIR)/$@ -c $<
 
 

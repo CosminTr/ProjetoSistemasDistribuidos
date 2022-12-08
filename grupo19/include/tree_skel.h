@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "message_private.h"
 #include "zookeeper/zookeeper.h"
+#include "network_client.h"
 
 struct request_t {
     int op_n;       //o número da operação
@@ -55,6 +56,7 @@ int verify(int op_n);
 */
 void *process_request(void *params);
 
+int connectToZKServer(struct rtree_t *server, char *serverInfo);
 int start_ts_zk(char *zk_addr, int serverPort);
 
 #endif

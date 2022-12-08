@@ -117,7 +117,7 @@ struct rtree_t *rtree_connect(const char *address_port){
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
  
     // Ligar a ZooKeeper
-    zkConn->zh = zookeeper_init(address_port, connection_watcher, 2000, 0, NULL, 0);
+    zkConn->zh = zookeeper_init(address_port, connection_watcher, 20000, 0, NULL, 0);
     if (zkConn->zh == NULL){
         fprintf(stderr, "Error connecting to ZooKeeper server[%d]!\n", errno);
         exit(EXIT_FAILURE);
@@ -153,12 +153,15 @@ struct rtree_t *rtree_connect(const char *address_port){
                 tail->zk_identifier = children_list->data[i];
         }
         fprintf(stderr, "\n=== done ===\n");
+
         strcpy(headPath, root_path);
         strcat(headPath, "/");
         strcat(headPath, head->zk_identifier);
+
         strcpy(tailPath, root_path);
         strcat(tailPath, "/");
         strcat(tailPath, tail->zk_identifier);
+
         zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
         zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
     }

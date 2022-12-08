@@ -3,7 +3,6 @@
 #include <errno.h>
 #include "message_private.h"
 #include <pthread.h>
-#include "zookeeper/zookeeper.h"
 #include <netdb.h>
 //#include "client_stub-private.h"
 #include <string.h>
@@ -22,7 +21,7 @@ struct rtree_t *zk_tree;
 const char *zoo_path = "/chain";
 static char *watcher_ctx = "ZooKeeper Data Watcher";
 int new_path_len = 1024;
-char* new_path;
+char* new_path;//name: node00000X
 //getting server IP-----------------------
 char hostbuf[256];
 char *IPbuf;
@@ -311,6 +310,25 @@ void *process_request(void *params){
     pthread_mutex_unlock(&queue_lock);
     return NULL;
 }
+int connectToZKServer(struct rtree_t *server, char *serverInfo){
+    printf("AQUI : NOVO: %s\n\n\n", serverInfo);
+    //VERIFICAR SE FUNCIONA
+    char *host = strtok((char *)serverInfo, ":"); // hostname    removed:
+    int port = atoi(strtok(NULL, ":"));     // port      '<' ':' '>'
+
+    server->server_socket.sin_family = AF_INET;
+    server->server_socket.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, host, &server->server_socket.sin_addr) < 1) {
+        printf("Erro ao converter IP\n");
+        return -1;
+    }
+    if (network_connect(server) == -1) { //ERRO
+        return -1;
+    }
+
+    return 0;
+}
 //from zchildwatcher.c
 void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, void* context) {
 	if (type == ZOO_SESSION_EVENT) {
@@ -337,16 +355,29 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             strcpy(next, "0");
             fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
 		    for (int i = 0; i < children_list->count; i++)  {
-			if(strcmp(next, "0")==0 && strcmp(children_list->data[i], new_path)>0)
-                strcpy(next, children_list->data[i]);
-            if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
-                strcpy(next, children_list->data[i]);
+                printf("\n%s", children_list->data[i]);
+			    if(strcmp(next, "0")==0 && strcmp(children_list->data[i], new_path)>0)
+                    strcpy(next, children_list->data[i]);
+                if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
+                    strcpy(next, children_list->data[i]);
 		}
 		fprintf(stderr, "\n=== done ===\n");
 
         //pode dar um problema de memoria
         zk_tree->zk_next_id = next;
         zk_tree->zk_identifier = new_path;
+        if(strcmp(next, "0")!=0){
+            int data_size = 50;
+            char *data = malloc(data_size);
+            char data_path[120];
+            strcpy(data_path, zoo_path);
+            strcat(data_path, "/");
+            strcat(data_path, new_path);
+            zoo_get(zk_tree->zh, data_path, 0, data, &data_size, NULL);
+            connectToZKServer(zk_tree, data);
+            free(data);
+        }
+
 		} 
 	}
 	free(children_list);
@@ -367,10 +398,9 @@ int start_ts_zk(char *zk_addr, int serverPort) {
     strcat(serverInfo, ":");
     strcat(serverInfo, port);
     free(port);
-    printf("AQUI SERVER INFO: %s\n\n\n", serverInfo);
     //----------------
     
-    zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
+    zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 20000, 0, NULL, 0);
     
     if (zk_tree->zh == NULL) {
         printf("Erro ao connectar com o servidor Zookeeper, t_s, (zookeeper_init) \n");
@@ -414,22 +444,6 @@ int start_ts_zk(char *zk_addr, int serverPort) {
             printf("Erro ao criar um watcher para /chain");
         }
 
-        //encontrar o proximo node
-        //PODE DAR PROBLEMA NO COMPARE
-        char *next = malloc(new_path_len);
-        strcpy(next, "0");
-        fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
-		for (int i = 0; i < children_list->count; i++)  {
-			if(strcmp(next, "0")==0 && strcmp(children_list->data[i], new_path)>0)
-                strcpy(next, children_list->data[i]);
-            if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
-                strcpy(next, children_list->data[i]);
-		}
-		fprintf(stderr, "\n=== done ===\n");
-        free(children_list);
-        //pode dar um problema de memoria
-        zk_tree->zk_next_id = next;
-        zk_tree->zk_identifier = new_path;
         
         return 0;
     }
