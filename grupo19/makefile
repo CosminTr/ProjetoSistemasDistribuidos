@@ -28,10 +28,10 @@ client-lib.o: $(client-lib)
 	ld -r $(addprefix $(OBJ_DIR)/,$^) -o $(LIB_DIR)/$@
 
 tree-client: $(tree-client)
-	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -o $(BIN_DIR)/$@
+	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -lzookeeper_mt -o $(BIN_DIR)/$@
 
 tree-server: $(tree-server)
-	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -pthread -lprotobuf-c -o $(BIN_DIR)/$@
+	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -pthread -lprotobuf-c -lzookeeper_mt -o $(BIN_DIR)/$@
 
 
 
