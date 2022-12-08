@@ -363,7 +363,7 @@ int start_ts_zk(char *zk_addr, int serverPort) {
     
     char *port = malloc(4 * sizeof(char));
     char *serverInfo = malloc(12 * sizeof(char));
-    sptrintf(port, "%d", serverPort);
+    sprintf(port, "%d", serverPort);
     strcpy(serverInfo, IPbuf);
     strcat(serverInfo, ":");
     strcat(serverInfo, port);
