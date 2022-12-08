@@ -45,10 +45,12 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 }
 
 static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx){
-    int data_len = ZDATALEN;
+    int data_len = 50;
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
-    char *headInfo = malloc(ZDATALEN);
-    char *tailInfo = malloc(ZDATALEN);
+    char headPath[120];
+    char tailPath[120];
+    char *headInfo = malloc(data_len);
+    char *tailInfo = malloc(data_len);
     if (state == ZOO_CONNECTED_STATE){
         if (type == ZOO_CHILD_EVENT){
             /* Get the updated children and reset the watch */
@@ -67,8 +69,12 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 }
             }
             fprintf(stderr, "\n=== done ===\n");
-            zoo_get(head->zh, head->zk_identifier, 0, headInfo, &data_len, NULL);
-            zoo_get(tail->zh, tail->zk_identifier, 0, tailInfo, &data_len, NULL);
+            strcpy(headPath, root_path);
+            strcat(headPath, head->zk_identifier);
+            strcpy(tailPath, root_path);
+            strcat(tailPath, tail->zk_identifier);
+            zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
+            zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
             if(connectToZKServer(head, headInfo) == -1){
                 printf("Erro ao conetar a Head");
                 exit(1);
@@ -86,6 +92,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
 
 //return 0(OK) or -1 in case couldnt connect to server
 int connectToZKServer(struct rtree_t *server, char *serverInfo){
+    printf("AQUI : NOVO: %s\n\n\n", serverInfo);
     //VERIFICAR SE FUNCIONA
     char *host = strtok((char *)serverInfo, ":"); // hostname    removed:
     int port = atoi(strtok(NULL, ":"));     // port      '<' ':' '>'
@@ -119,9 +126,11 @@ struct rtree_t *rtree_connect(const char *address_port){
 
     // Colocar um Watcher para os servers + Conseguir head e tails
     // No exemplo PQ o while(1) e como saimos dele?
-    int data_len = ZDATALEN;
-    char *headInfo = malloc(ZDATALEN * sizeof(char));
-    char *tailInfo = malloc(ZDATALEN * sizeof(char));
+    int data_len = 50;
+    char headPath[120];
+    char tailPath[120];
+    char *headInfo = malloc(data_len);
+    char *tailInfo = malloc(data_len);
 
     if (zkConn->is_connected){
         // Possibilidade de usar um watch do /chain se nao existir (no valor 0)
@@ -144,12 +153,17 @@ struct rtree_t *rtree_connect(const char *address_port){
                 tail->zk_identifier = children_list->data[i];
         }
         fprintf(stderr, "\n=== done ===\n");
-        printf("AQUI : NOVO: %s\n\n\n", head->zk_identifier);
-        printf("AQUI : NOVO: %s\n\n\n", tail->zk_identifier);
-        zoo_get(head->zh, head->zk_identifier, 0, headInfo, &data_len, NULL);
-        zoo_get(tail->zh, tail->zk_identifier, 0, tailInfo, &data_len, NULL);
+        strcpy(headPath, root_path);
+        strcat(headPath, "/");
+        strcat(headPath, head->zk_identifier);
+        strcpy(tailPath, root_path);
+        strcat(tailPath, "/");
+        strcat(tailPath, tail->zk_identifier);
+        zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
+        zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
     }
-
+    printf("AQUI : NOVO: %s\n\n\n", tailPath);
+    printf("AQUI : NOVO: %s\n\n\n", tailInfo);
     if(connectToZKServer(head, headInfo) == -1){
         printf("Erro ao conetar a Head");
         return NULL;

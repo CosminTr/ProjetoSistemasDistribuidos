@@ -361,12 +361,13 @@ int start_ts_zk(char *zk_addr, int serverPort) {
     IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
     
     char *port = malloc(4 * sizeof(char));
-    char *serverInfo = malloc(12 * sizeof(char));
+    char *serverInfo = malloc(20 * sizeof(char));
     sprintf(port, "%d", serverPort);
     strcpy(serverInfo, IPbuf);
     strcat(serverInfo, ":");
     strcat(serverInfo, port);
     free(port);
+    printf("AQUI SERVER INFO: %s\n\n\n", serverInfo);
     //----------------
     
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 2000, 0, NULL, 0);
@@ -396,7 +397,7 @@ int start_ts_zk(char *zk_addr, int serverPort) {
         //nome do nosso Znode depois de criado
 		new_path = malloc (new_path_len);
         
-        if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 10, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
+        if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 20, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
 				fprintf(stderr, "Error creating znode from path %s!\n", node_path);
 			    exit(EXIT_FAILURE);
 		}
