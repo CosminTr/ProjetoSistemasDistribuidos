@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     //TROCAR POR LISTA DE RTREE_T
-    tree = rtree_connect((char *)argv[1]);
+    tree = rtree_connect(argv[1]);
     //start_cs_zk((char *)argv[1]);
 
     char* pedido;

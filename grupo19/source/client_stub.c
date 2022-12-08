@@ -16,6 +16,7 @@ struct rtree_t *zkConn;
 
 /* Zookeeper stuff */
 // PRECISAMOS DO HOST_PORT GLOBAL?
+#define ZDATALEN 1024 * 1024
 struct rtree_t *head;
 struct rtree_t *tail;
 static char *root_path = "/chain";
@@ -44,7 +45,10 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 }
 
 static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx){
-    // int zoo_data_len = ZDATALEN;
+    int data_len = ZDATALEN;
+    children_list = (zoo_string *)malloc(sizeof(zoo_string));
+    char *headInfo = malloc(ZDATALEN);
+    char *tailInfo = malloc(ZDATALEN);
     if (state == ZOO_CONNECTED_STATE){
         if (type == ZOO_CHILD_EVENT){
             /* Get the updated children and reset the watch */
@@ -55,8 +59,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             for (int i = 0; i < children_list->count; i++){
                 head->zk_identifier = children_list->data[0];
                 tail->zk_identifier = children_list->data[0];
-                for (int i = 0; i < children_list->count; i++)
-                {
+                for (int i = 0; i < children_list->count; i++){
                     if (strcmp(children_list->data[i], head->zk_identifier) < 0)
                         head->zk_identifier = children_list->data[i];
                     if (strcmp(children_list->data[i], tail->zk_identifier) > 0)
@@ -64,19 +67,31 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 }
             }
             fprintf(stderr, "\n=== done ===\n");
+            zoo_get(head->zh, head->zk_identifier, 0, headInfo, &data_len, NULL);
+            zoo_get(tail->zh, tail->zk_identifier, 0, tailInfo, &data_len, NULL);
+            if(connectToZKServer(head, headInfo) == -1){
+                printf("Erro ao conetar a Head");
+                exit(1);
+            }
+            if(connectToZKServer(tail, tailInfo) == -1){
+                printf("Erro ao conetar a Tail");
+                exit(1);
+            }
         }
     }
     free(children_list);
+    free(headInfo);
+    free(tailInfo);
 }
 
 //return 0(OK) or -1 in case couldnt connect to server
-int connectToZKServer(struct rtree_t *server){
+int connectToZKServer(struct rtree_t *server, char *serverInfo){
     //VERIFICAR SE FUNCIONA
-    char *host = strtok((char *)server->zk_identifier, ":"); // hostname    removed:
+    char *host = strtok((char *)serverInfo, ":"); // hostname    removed:
     int port = atoi(strtok(NULL, ":"));     // port      '<' ':' '>'
 
-    zkConn->server_socket.sin_family = AF_INET;
-    zkConn->server_socket.sin_port = htons(port);
+    server->server_socket.sin_family = AF_INET;
+    server->server_socket.sin_port = htons(port);
 
     if (inet_pton(AF_INET, host, &server->server_socket.sin_addr) < 1) {
         printf("Erro ao converter IP\n");
@@ -93,26 +108,28 @@ struct rtree_t *rtree_connect(const char *address_port){
     head = (struct rtree_t *)malloc(sizeof(struct rtree_t));
     tail = (struct rtree_t *)malloc(sizeof(struct rtree_t));
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
-
+ 
     // Ligar a ZooKeeper
-    zkConn->zh = zookeeper_init(address_port, connection_watcher, 2000, 0, 0, 0);
-    if (zkConn->zh == NULL)
-    {
+    zkConn->zh = zookeeper_init(address_port, connection_watcher, 2000, 0, NULL, 0);
+    if (zkConn->zh == NULL){
         fprintf(stderr, "Error connecting to ZooKeeper server[%d]!\n", errno);
         exit(EXIT_FAILURE);
     }
+    sleep(3); //dorme para conectar
 
     // Colocar um Watcher para os servers + Conseguir head e tails
     // No exemplo PQ o while(1) e como saimos dele?
-    if (zkConn->is_connected)
-    {
+    int data_len = ZDATALEN;
+    char *headInfo = malloc(ZDATALEN * sizeof(char));
+    char *tailInfo = malloc(ZDATALEN * sizeof(char));
+
+    if (zkConn->is_connected){
         // Possibilidade de usar um watch do /chain se nao existir (no valor 0)
-        if (ZNONODE == zoo_exists(zkConn->zh, root_path, 0, NULL))
-        {
+        if (ZNONODE == zoo_exists(zkConn->zh, root_path, 0, NULL)){
             printf("Error: %s doesnt exist!!", root_path);
         }
-        if (ZOK != zoo_wget_children(zkConn->zh, root_path, &child_watcher, watcher_ctx, children_list))
-        {
+        
+        if (ZOK != zoo_wget_children(zkConn->zh, root_path, &child_watcher, watcher_ctx, children_list)){
             fprintf(stderr, "Error setting watch at %s!\n", root_path);
         }
 
@@ -127,16 +144,24 @@ struct rtree_t *rtree_connect(const char *address_port){
                 tail->zk_identifier = children_list->data[i];
         }
         fprintf(stderr, "\n=== done ===\n");
+        printf("AQUI : NOVO: %s\n\n\n", head->zk_identifier);
+        printf("AQUI : NOVO: %s\n\n\n", tail->zk_identifier);
+        zoo_get(head->zh, head->zk_identifier, 0, headInfo, &data_len, NULL);
+        zoo_get(tail->zh, tail->zk_identifier, 0, tailInfo, &data_len, NULL);
     }
 
-    if(connectToZKServer(head) == -1){
+    if(connectToZKServer(head, headInfo) == -1){
         printf("Erro ao conetar a Head");
         return NULL;
     }
-    if(connectToZKServer(tail) == -1){
+    if(connectToZKServer(tail, tailInfo) == -1){
         printf("Erro ao conetar a Tail");
         return NULL;
     }
+
+    free(children_list);
+    free(headInfo);
+    free(tailInfo);
 
     signal(SIGINT, close_free);
     // struct rtree_t ZKservers[2];

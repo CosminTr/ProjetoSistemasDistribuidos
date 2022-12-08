@@ -8,6 +8,8 @@
  */
 struct rtree_t;
 
+int connectToZKServer(struct rtree_t *server, char *serverInfo);
+
 /* Função para estabelecer uma associação entre o cliente e o servidor, 
  * em que address_port é uma string no formato <hostname>:<port>.
  * Retorna NULL em caso de erro.
