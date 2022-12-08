@@ -139,11 +139,11 @@ struct rtree_t *rtree_connect(const char *address_port){
     }
 
     signal(SIGINT, close_free);
-    struct rtree_t ZKservers[2];
-    ZKservers[0] = *head;
-    ZKservers[1] = *tail;
+    // struct rtree_t ZKservers[2];
+    // ZKservers[0] = *head;
+    // ZKservers[1] = *tail;
     //retorna o server a quem enviamos os pedidos
-    return ZKservers;
+    return tail;
 }
 int rtree_disconnect(struct rtree_t *rtree) {
     if (network_close(head) != 0)

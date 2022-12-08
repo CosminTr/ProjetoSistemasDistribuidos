@@ -21,7 +21,7 @@ int main(int argc, char * argv[]){
         perror("Erro ao inicializar tree: \n");
         return -1;
     }
-    if (start_ts_zk(argv[1], argv[2]) == -1) {
+    if (start_ts_zk(argv[2], atoi(argv[1])) == -1) {
         perror("Erro ao inicializar tree: \n");
         return -1;
     }

@@ -325,7 +325,6 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 //TODO pode não estar completo
 static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx) {
 	children_list =	(zoo_string *) malloc(sizeof(zoo_string));
-	int zoo_data_len = ZDATALEN;
 	if (state == ZOO_CONNECTED_STATE)	 {
 		if (type == ZOO_CHILD_EVENT) {
 	 	   /* Get the updated children and reset the watch */ 
