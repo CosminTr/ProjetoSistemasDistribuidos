@@ -45,6 +45,7 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 }
 
 static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx){
+    //filhos tiveram update entao precisamos ver novos head/tail e ligar a esses
     int data_len = 50;
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
     char headPath[120];
@@ -57,6 +58,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             if (ZOK != zoo_wget_children(zkConn->zh, root_path, child_watcher, watcher_ctx, children_list)){
                 fprintf(stderr, "Error setting watch at %s!\n", root_path);
             }
+            //conseguir nome do menor node e maior node(ex: node0000001)
             fprintf(stderr, "\n=== znode listing === [ %s ]", root_path);
             for (int i = 0; i < children_list->count; i++){
                 head->zk_identifier = children_list->data[0];
@@ -69,12 +71,16 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 }
             }
             fprintf(stderr, "\n=== done ===\n");
+            //conseguir path do maior e menor node (ex: /chain/node000001)
             strcpy(headPath, root_path);
             strcat(headPath, head->zk_identifier);
             strcpy(tailPath, root_path);
             strcat(tailPath, tail->zk_identifier);
+            //conseguir data do maior e menor node("IP:Port") e guardar em headInfo e tailInfo
             zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
             zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
+            //conetar a esses servidores para enviar/receber pedidos
+            //dados conexao mantidos em rtree head/tail
             if(connectToZKServer(head, headInfo) == -1){
                 printf("Erro ao conetar a Head");
                 exit(1);
@@ -136,24 +142,25 @@ struct rtree_t *rtree_connect(const char *address_port){
         // Possibilidade de usar um watch do /chain se nao existir (no valor 0)
         if (ZNONODE == zoo_exists(zkConn->zh, root_path, 0, NULL)){
             printf("Error: %s doesnt exist!!", root_path);
+            //exit(1);
         }
         
         if (ZOK != zoo_wget_children(zkConn->zh, root_path, &child_watcher, watcher_ctx, children_list)){
             fprintf(stderr, "Error setting watch at %s!\n", root_path);
         }
 
+        //conseguir nome do menor node e maior node(ex: node0000001)
         fprintf(stderr, "\n=== znode Head and Tail set === [ %s ]", root_path);
         head->zk_identifier = children_list->data[0];
         tail->zk_identifier = children_list->data[0];
-        for (int i = 0; i < children_list->count; i++)
-        {
+        for (int i = 0; i < children_list->count; i++){
             if (strcmp(children_list->data[i], head->zk_identifier) < 0)
                 head->zk_identifier = children_list->data[i];
             if (strcmp(children_list->data[i], tail->zk_identifier) > 0)
                 tail->zk_identifier = children_list->data[i];
         }
         fprintf(stderr, "\n=== done ===\n");
-
+        //conseguir path do maior e menor node (ex: /chain/node000001)
         strcpy(headPath, root_path);
         strcat(headPath, "/");
         strcat(headPath, head->zk_identifier);
@@ -161,12 +168,14 @@ struct rtree_t *rtree_connect(const char *address_port){
         strcpy(tailPath, root_path);
         strcat(tailPath, "/");
         strcat(tailPath, tail->zk_identifier);
-
+        //conseguir data do maior e menor node("IP:Port") e guardar em headInfo e tailInfo
         zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
         zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
     }
-    printf("AQUI : NOVO: %s\n\n\n", tailPath);
+    printf("AQUI : NOVO: %s\n\n\n", headInfo);
     printf("AQUI : NOVO: %s\n\n\n", tailInfo);
+    //conetar a esses servidores para enviar/receber pedidos
+    //dados conexao mantidos em rtree head/tail
     if(connectToZKServer(head, headInfo) == -1){
         printf("Erro ao conetar a Head");
         return NULL;
@@ -181,10 +190,8 @@ struct rtree_t *rtree_connect(const char *address_port){
     free(tailInfo);
 
     signal(SIGINT, close_free);
-    // struct rtree_t ZKservers[2];
-    // ZKservers[0] = *head;
-    // ZKservers[1] = *tail;
-    //retorna o server a quem enviamos os pedidos
+
+    //nao interessa o que retorna
     return tail;
 }
 int rtree_disconnect(struct rtree_t *rtree) {

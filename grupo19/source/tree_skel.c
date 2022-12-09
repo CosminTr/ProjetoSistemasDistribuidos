@@ -358,10 +358,10 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
 		}
 	} 
 }
-//from zchildwatcher.c
-//TODO pode não estar completo
+
 static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath, void *watcher_ctx) {
-	children_list =	(zoo_string *) malloc(sizeof(zoo_string));
+	//quando filhos fazem update encontrar o novo next_server(se houver) e conetar a ele
+    children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 	if (state == ZOO_CONNECTED_STATE)	 {
 		if (type == ZOO_CHILD_EVENT) {
 	 	   /* Get the updated children and reset the watch */ 
@@ -370,6 +370,8 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
  			}
 			//encontrar o proximo node
             //PODE DAR PROBLEMA NO COMPARE
+            //"next" tem o nome do node(ex:node000001)
+            //estado inicial "0" serve como um NULL ou vazio
             char *next = malloc(new_path_len);
             strcpy(next, "0");
             fprintf(stderr, "\n=== znode listing === [ %s ]", zoo_path); 
@@ -379,30 +381,32 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                     strcpy(next, children_list->data[i]);
                 if(strcmp(children_list->data[i], new_path)>0 && strcmp(children_list->data[i], next)<0)
                     strcpy(next, children_list->data[i]);
-		}
-        sleep(2);
-		fprintf(stderr, "\n=== done ===\n");
+            }
+            //necessario?
+            sleep(2);
+            fprintf(stderr, "\n=== done ===\n");
 
-        //pode dar um problema de memoria
-        zk_tree->zk_next_id = next;
-        zk_tree->zk_identifier = new_path;
-        if(strcmp(next, "0")!=0){
-            int data_size = 50;
-            char *data = malloc(data_size);
-            zoo_get(zk_tree->zh, new_path, 0, data, &data_size, NULL);
-            printf("DATA: %s\n\n\n", new_path);
-            connectToZKServer(zk_tree, data);
-            free(data);
-        }
-
+            //pode dar um problema de memoria
+            //no caso de haver um node a seguir a nós(next != "0") conetar a ele
+            zk_tree->zk_identifier = new_path;
+            if(strcmp(next, "0")!=0){
+                //conseguir data do next_server("IP:Port")
+                int data_size = 50;
+                char *data = malloc(data_size);
+                zoo_get(zk_tree->zh, new_path, 0, data, &data_size, NULL);
+                printf("DATA: %s\n\n\n", new_path);
+                //conetar a esse server e guardar conexao em zk_tree
+                //queremos guardar conexao ao next_server em zk_tree?
+                connectToZKServer(zk_tree, data);
+                free(data);
+            }
 		} 
 	}
 	free(children_list);
 }
 
-//from zoo.c, zchildwatcher.c ...
 int start_ts_zk(char *zk_addr, int serverPort) {
-    //serverInfo------------
+    //serverInfo(IP:Port) a partir do serverPort------------
     hostname = gethostname(hostbuf, sizeof(hostbuf));
     host_entry = gethostbyname(hostbuf);
     //hostbuf: nome / IPbuf: XX.XX.XX.XXX
@@ -415,7 +419,7 @@ int start_ts_zk(char *zk_addr, int serverPort) {
     strcat(serverInfo, ":");
     strcat(serverInfo, port);
     free(port);
-    //----------------
+    //-------------------------
     
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 20000, 0, NULL, 0);
     
@@ -441,22 +445,25 @@ int start_ts_zk(char *zk_addr, int serverPort) {
 		strcat(node_path,zoo_path); 
 		strcat(node_path,"/node"); 
 
-        //nome do nosso Znode depois de criado
+        //path do nosso Znode depois de criado(ex: /chain/node000001)
 		new_path = malloc (new_path_len);
-        
+        //criar node relativo ao server atual
         if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 20, &ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
 				fprintf(stderr, "Error creating znode from path %s!\n", node_path);
 			    exit(EXIT_FAILURE);
 		}
 
-        //os putos
-        children_list = (zoo_string *) malloc(sizeof(zoo_string));
-        int retval = zoo_get_children(zk_tree->zh, zoo_path, 0 , children_list);
-        if (retval != ZOK) {
-            printf("Erro ao obter znode do caminho, %s \n", zoo_path);
-            return -1;
-        }
-        
+        //irrelevante pois quando nos ligamos ja sabemos que somos o tail(sequencial) 
+        //logo nao temos de nos ligar a nada
+
+        // children_list = (zoo_string *) malloc(sizeof(zoo_string));
+        // int retval = zoo_get_children(zk_tree->zh, zoo_path, 0 , children_list);
+        // if (retval != ZOK) {
+        //     printf("Erro ao obter znode do caminho, %s \n", zoo_path);
+        //     return -1;
+        // }
+
+        //colocar watcher nos filhos para se houver um update saber a quem me ligar
         if (ZOK != zoo_wget_children(zk_tree->zh, zoo_path, &child_watcher, watcher_ctx, children_list)) {
             printf("Erro ao criar um watcher para /chain");
         }

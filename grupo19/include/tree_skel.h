@@ -22,7 +22,9 @@ struct rtree_t {
 
     //CONFIRM
     char *zk_identifier;
-    char *zk_next_id;
+    //char *zk_next_id; irrelevante pq faz o mm que zk_identifier
+    //char *node_path
+    //possivelmente meter aqui o path completo
 
     zhandle_t *zh;
     int is_connected;

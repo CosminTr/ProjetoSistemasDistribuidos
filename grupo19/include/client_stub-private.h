@@ -6,9 +6,9 @@ struct rtree_t {
     int socket_num;
 
     //CONFIRM
-    char *zk_identifier;
-//    char *zk_next_id;
+    char *zk_identifier; //nome do node
 
+    //para a conecao ao Zookeeper
     zhandle_t *zh;
     int is_connected;
 
