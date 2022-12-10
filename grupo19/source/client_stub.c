@@ -195,6 +195,7 @@ struct rtree_t *rtree_connect(const char *address_port){
     //nao interessa o que retorna
     return tail;
 }
+
 int rtree_disconnect(struct rtree_t *rtree) {
     if (network_close(head) != 0)
         return -1;

@@ -61,6 +61,6 @@ int verify(int op_n);
 void *process_request(void *params);
 
 int connectToZKServer(struct rtree_t *server, char *serverInfo);
-int start_ts_zk(char *zk_addr, int serverPort);
+int start_ts_zk(const char *zk_addr, int serverPort);
 
 #endif

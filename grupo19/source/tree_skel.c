@@ -4,7 +4,6 @@
 #include "message_private.h"
 #include <pthread.h>
 #include <netdb.h>
-//#include "client_stub-private.h"
 #include <string.h>
 
 /*Trabalho realizado por 
@@ -14,20 +13,16 @@
 */
 
 //zookeeper stuff ------------------------
-#define ZDATALEN 1024 * 1024
+struct rtree_t *zk_tree;
+#define ZDATALEN 1024 
 typedef struct String_vector zoo_string; 
 zoo_string *children_list;
-struct rtree_t *zk_tree;
 const char *zoo_path = "/chain";
 static char *watcher_ctx = "ZooKeeper Data Watcher";
 int new_path_len = 1024;
 char* new_path;
-//getting server IP-----------------------
-char hostbuf[256];
-char *IPbuf;
-struct hostent *host_entry;
-int hostname;
-// ----------------------------------------
+
+//remote tree---------------
 struct tree_t *rtree;
 
 //Multiplexagem-------------
@@ -77,9 +72,6 @@ int tree_skel_init() {
         perror(strerror(errno));
         return -1;
     }
-
-    //ZK stuff?    maybe move to start_ts_zk
-    zk_tree = (struct rtree_t *) malloc(sizeof(struct rtree_t *));
     
     //Create
     if (pthread_create(&thread, NULL, &process_request, NULL) != 0){
@@ -91,9 +83,10 @@ int tree_skel_init() {
 }
 
 void tree_skel_destroy() {
-    //dar join da thread
-    //free(new_path);
-    close(zk_tree->socket_num);
+    // if(zk_tree->socket_num!=0)
+    //     close(zk_tree->socket_num);
+    free(new_path);
+    free(zk_tree->zk_identifier);
     pthread_mutex_lock(&queue_lock);
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
@@ -104,6 +97,8 @@ void tree_skel_destroy() {
     pthread_mutex_destroy(&queue_lock);
     pthread_mutex_destroy(&tree_lock);
     pthread_mutex_destroy(&op_lock);
+    zookeeper_close(zk_tree->zh);
+    free(zk_tree);
     tree_destroy(rtree);
 }
 //NOTA QUAIS OS CASOS DE ERRO PARA SIZE, HEIGHT, VERIFY, PUT, DEL?
@@ -465,29 +460,33 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 //conetar a esse server e guardar conexao em zk_tree
                 //queremos guardar conexao ao next_server em zk_tree?
                 connectToZKServer(zk_tree, data);
-                //free(data);
+                free(data);
             }
+            free(next);
 		} 
 	}
 	free(children_list);
 }
 
-int start_ts_zk(char *zk_addr, int serverPort) {
+int start_ts_zk(const char *zk_addr, int serverPort) {
     //serverInfo(IP:Port) a partir do serverPort------------
-    hostname = gethostname(hostbuf, sizeof(hostbuf));
+    char hostbuf[256];
+    struct hostent *host_entry;
+
+    int hostname = gethostname(hostbuf, sizeof(hostbuf));
     host_entry = gethostbyname(hostbuf);
     //hostbuf: nome / IPbuf: XX.XX.XX.XXX
-    IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
+    char *IPbuf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
     
-    char *port = malloc(4 * sizeof(char));
-    char *serverInfo = malloc(20 * sizeof(char));
+    char *port = malloc(sizeof(int)+1);
+    char *serverInfo = malloc(40 * sizeof(char));
     sprintf(port, "%d", serverPort);
     strcpy(serverInfo, IPbuf);
     strcat(serverInfo, ":");
     strcat(serverInfo, port);
-    //free(port);
+    free(port);
     //-------------------------
-    
+    zk_tree = (struct rtree_t *)malloc(sizeof(struct rtree_t));
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 20000, 0, NULL, 0);
     
     if (zk_tree->zh == NULL) {
@@ -499,7 +498,6 @@ int start_ts_zk(char *zk_addr, int serverPort) {
     if (zk_tree->is_connected) {
         //se nao existe chain, criar
         if(ZNONODE == zoo_exists(zk_tree->zh, zoo_path, 0, NULL)) {
-            printf("NAO HA CHAIN ZE");
             //criar chain
             if (ZOK == zoo_create(zk_tree->zh, zoo_path, NULL, -1, & ZOO_OPEN_ACL_UNSAFE, 0, NULL, 0)) {
                 printf("criado o nó chain. \n");
@@ -509,7 +507,7 @@ int start_ts_zk(char *zk_addr, int serverPort) {
             }
         }
         //criar node de server atual
-        char node_path[120] = "";
+        char node_path[40] = "";
 		strcat(node_path,zoo_path); 
 		strcat(node_path,"/node"); 
 
@@ -517,11 +515,11 @@ int start_ts_zk(char *zk_addr, int serverPort) {
 		new_path = malloc (new_path_len);
         char nodeName[120];
         //criar node relativo ao server atual
-        if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 20, &ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
+        if (ZOK != zoo_create(zk_tree->zh, node_path, serverInfo, 40, &ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, new_path, new_path_len)) {
 				fprintf(stderr, "Error creating znode from path %s!\n", node_path);
 			    exit(EXIT_FAILURE);
 		}
-
+        free(serverInfo);
         strcpy(nodeName, new_path);
         strtok(nodeName, "/");
         zk_tree->zk_identifier = strdup(strtok(NULL, ""));
