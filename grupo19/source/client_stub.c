@@ -204,7 +204,6 @@ int rtree_disconnect(struct rtree_t *rtree) {
     
     free(head);
     free(tail);
-    free(children_list);
     free(zkConn);
     return 0;
 }
