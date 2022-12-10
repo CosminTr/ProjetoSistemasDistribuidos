@@ -61,6 +61,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             //conseguir nome do menor node e maior node(ex: node0000001)
             fprintf(stderr, "\n=== znode listing === [ %s ]", root_path);
             for (int i = 0; i < children_list->count; i++){
+                printf("CHILD: %s\n\n", children_list->data[i]);
                 head->zk_identifier = children_list->data[0];
                 tail->zk_identifier = children_list->data[0];
                 for (int i = 0; i < children_list->count; i++){
@@ -71,16 +72,21 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 }
             }
             fprintf(stderr, "\n=== done ===\n");
+            sleep(6);
             //conseguir path do maior e menor node (ex: /chain/node000001)
             strcpy(headPath, root_path);
+            strcat(headPath, "/");
             strcat(headPath, head->zk_identifier);
             strcpy(tailPath, root_path);
+            strcat(tailPath, "/");
             strcat(tailPath, tail->zk_identifier);
             //conseguir data do maior e menor node("IP:Port") e guardar em headInfo e tailInfo
             zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
             zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
             //conetar a esses servidores para enviar/receber pedidos
             //dados conexao mantidos em rtree head/tail
+            printf("HEADpath: %s\n\n", headPath);
+            printf("TAILpath: %s\n\n", tailPath);
             if(connectToZKServer(head, headInfo) == -1){
                 printf("Erro ao conetar a Head");
                 exit(1);
