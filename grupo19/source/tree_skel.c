@@ -87,6 +87,7 @@ void tree_skel_destroy() {
     //     close(zk_tree->socket_num);
     free(new_path);
     free(zk_tree->zk_identifier);
+    free(zk_tree->next_server);
     pthread_mutex_lock(&queue_lock);
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
@@ -127,17 +128,12 @@ int invoke(MessageT *msg) {
                     current1 = current1->next;
                 current1->next = temporary1;
             }
-
             last_assigned++;
-            
-            printf("HEY HEY\n\n\n");
-            printf("SOCK NUM: %d\n\n", zk_tree->socket_num);
             msg->opcode = MESSAGE_T__OPCODE__OP_PUT + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             msg->op_n = temporary1->op_n;
             pthread_cond_broadcast(&queue_not_empty);
             pthread_mutex_unlock(&queue_lock);
-            printf("OLA OLA\n\n\n");
             return 0;
             break;
         case MESSAGE_T__OPCODE__OP_GET: ;
@@ -279,9 +275,11 @@ MessageT *createPutMessage(char *key, struct data_t *data){
         return NULL;
     }
 
-    msg->entry->key = key;
+    //struct data_t *temp = data_dup(data);
+    msg->entry->key = strdup(key);
     msg->entry->data->datasize = data->datasize;
     msg->entry->data->data = data->data;
+    //memcpy(msg->entry->data->data, data->data, data->datasize);
 
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
@@ -301,13 +299,45 @@ MessageT *createDelMessage(char *key){
         return NULL;
     }
 
-    msg->entry->key = key;
+    msg->entry->key = strdup(key);
     msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
 
     return msg;
 }   
 
+MessageT *message_send_receive(int socket_num, MessageT *msg){
+    int msglen = message_t__get_packed_size(msg);
+    int resposta_len ;
+    uint8_t *buffer = malloc(msglen); 
+    //send
+    message_t__pack(msg, buffer);
+    int netlong = htonl(msglen);
+    write(socket_num, &netlong, sizeof(int));
+    if(write_all(socket_num, buffer, msglen) == -1){
+        free(buffer);
+        message_t__free_unpacked(msg, NULL);
+        exit(1);
+    }
+
+    free(buffer);
+    message_t__free_unpacked(msg, NULL);
+    
+    //receive
+    read(socket_num, &resposta_len, sizeof(int));
+    resposta_len = ntohl(resposta_len);
+    uint8_t resp[resposta_len];
+    read_all(socket_num, resp, resposta_len);
+    
+    MessageT *ret = message_t__unpack(NULL, resposta_len, resp);
+
+    if (ret->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        message_t__free_unpacked(ret, NULL); 
+        return NULL;
+    }
+    
+    return ret;  
+}
 //preciso mudar locks?
 void *process_request(void *params){ 
     while(close_threads==0){
@@ -336,8 +366,9 @@ void *process_request(void *params){
             if (tree_put(rtree, current->key, current->data) == -1)
                 printf("Error inserting entry\n");
             pthread_mutex_unlock(&tree_lock);
-            if(zk_tree->socket_num != 0){
-                network_send(zk_tree->socket_num, createPutMessage(current->key, current->data));        
+            if(strcmp(zk_tree->next_server, "none") != 0){
+                //message_t__free_unpacked(message_send_receive(zk_tree->socket_num, createPutMessage(current->key, current->data)), NULL);
+                network_send(zk_tree->socket_num, createPutMessage(current->key, current->data));
             }
         }
         else if (current->op == 0){ // del
@@ -345,8 +376,9 @@ void *process_request(void *params){
             if (tree_del(rtree, current->key) == -1)
                 printf("Key not found\n");
             pthread_mutex_unlock(&tree_lock);
-            if(zk_tree->socket_num != 0){
-                network_send(zk_tree->socket_num, createDelMessage(current->key));        
+            if(strcmp(zk_tree->next_server, "none") != 0){
+                //message_t__free_unpacked(message_send_receive(zk_tree->socket_num, createDelMessage(current->key)), NULL);
+                network_send(zk_tree->socket_num, createDelMessage(current->key));
             }
         }
         //----------------------------------------------
@@ -360,8 +392,11 @@ void *process_request(void *params){
         pthread_mutex_unlock(&op_lock);
 
         //dar free ao current
-        //free(current->key);
-        //data_destroy(current->data);
+        free(current->key);
+        if(strcmp(zk_tree->next_server, "none")==0)
+            data_destroy(current->data);//for tail server
+        else
+            free(current->data);//for all servers
         free(current);
 
         pthread_mutex_unlock(&queue_lock);
@@ -371,8 +406,6 @@ void *process_request(void *params){
 
 //NAO ESQUECER ARRANAJR FORMA DE DESLIGAR CONEXAO
 int connectToZKServer(struct rtree_t *server, char *serverInfo){
-
-
     printf("AQUI : NOVO: %s\n\n\n", serverInfo);
     //VERIFICAR SE FUNCIONA
     char *host = strtok((char *)serverInfo, ":"); // hostname    removed:
@@ -448,6 +481,8 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             //pode dar um problema de memoria
             //no caso de haver um node a seguir a nós(next != "0") conetar a ele
             if(strcmp(next, "0")!=0){
+                //copiar o identificador do proximo server(ex: node000002)
+                zk_tree->next_server = strdup(next);
                 //conseguir data do next_server("IP:Port")
                 int data_size = 50;
                 char *data = malloc(data_size);
@@ -487,6 +522,8 @@ int start_ts_zk(const char *zk_addr, int serverPort) {
     free(port);
     //-------------------------
     zk_tree = (struct rtree_t *)malloc(sizeof(struct rtree_t));
+    
+    zk_tree->next_server = "none";
     zk_tree->zh = zookeeper_init(zk_addr, connection_watcher, 20000, 0, NULL, 0);
     
     if (zk_tree->zh == NULL) {

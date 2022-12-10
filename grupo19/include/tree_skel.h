@@ -20,11 +20,11 @@ struct request_t {
 
 struct rtree_t {
     struct sockaddr_in server_socket; 
-    int socket_num;
+    int socket_num;//socket da ligacao ao proximo server
 
     //CONFIRM
     char *zk_identifier;//nome do node (ex node000001)
-    //char *zk_next_id; irrelevante pq faz o mm que zk_identifier
+    char *next_server;//nome do next node(ex node00002)
     //char *node_path
     //possivelmente meter aqui o path completo
 
