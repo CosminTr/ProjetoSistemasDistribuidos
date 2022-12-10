@@ -6,6 +6,8 @@
 #include "message_private.h"
 #include "zookeeper/zookeeper.h"
 #include "network_server.h"
+#include "data.h"
+#include "entry.h"
 
 struct request_t {
     int op_n;       //o número da operação

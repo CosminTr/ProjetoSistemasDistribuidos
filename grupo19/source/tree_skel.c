@@ -136,14 +136,6 @@ int invoke(MessageT *msg) {
             
             printf("HEY HEY\n\n\n");
             printf("SOCK NUM: %d\n\n", zk_tree->socket_num);
-            if(zk_tree->socket_num != 0){
-                MessageT *mess = message_create();
-                mess->c_type = MESSAGE_T__C_TYPE__CT_NONE;
-                mess->op_n = 146;
-                network_send(zk_tree->socket_num, msg);
-                
-            }
-            
             msg->opcode = MESSAGE_T__OPCODE__OP_PUT + 1;
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             msg->op_n = temporary1->op_n;
@@ -270,6 +262,56 @@ int verify(int op_n) {
     return 0;//False
 }
 
+MessageT *createPutMessage(char *key, struct data_t *data){
+    MessageT *msg = message_create();
+    if(msg == NULL)
+        return NULL;
+
+    msg->entry = (EntryT *) malloc(sizeof(EntryT));
+    entry_t__init(msg->entry);
+
+    if(msg->entry == NULL){
+        message_t__free_unpacked(msg, NULL);
+        return NULL;
+    }
+
+    msg->entry->data = (EntryT__DataT *) malloc(sizeof(EntryT__DataT));
+    entry_t__data_t__init(msg->entry->data);
+
+    if(msg->entry->data == NULL){
+        message_t__free_unpacked(msg, NULL);
+        return NULL;
+    }
+
+    msg->entry->key = key;
+    msg->entry->data->datasize = data->datasize;
+    msg->entry->data->data = data->data;
+
+    msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
+
+    return msg;
+}
+MessageT *createDelMessage(char *key){
+   MessageT *msg = message_create();
+    if(msg == NULL)
+        return NULL;
+
+    msg->entry = (EntryT *) malloc(sizeof(EntryT));
+    entry_t__init(msg->entry);
+    
+    if(msg->entry == NULL){
+        message_t__free_unpacked(msg, NULL);
+        return NULL;
+    }
+
+    msg->entry->key = key;
+    msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
+
+    return msg;
+}   
+
 //preciso mudar locks?
 void *process_request(void *params){ 
     pthread_mutex_lock(&queue_lock);
@@ -296,12 +338,18 @@ void *process_request(void *params){
         pthread_mutex_lock(&tree_lock);
         if (tree_put(rtree, current->key, current->data) == -1)
             printf("Error inserting entry\n");
+        if(zk_tree->socket_num != 0){
+            network_send(zk_tree->socket_num, createPutMessage(current->key, current->data));        
+        }
         pthread_mutex_unlock(&tree_lock);
     }
     else if (current->op == 0){ // del
         pthread_mutex_lock(&tree_lock);
         if (tree_del(rtree, current->key) == -1)
             printf("Key not found\n");
+        if(zk_tree->socket_num != 0){
+            network_send(zk_tree->socket_num, createDelMessage(current->key));        
+        }
         pthread_mutex_unlock(&tree_lock);
     }
     //----------------------------------------------
@@ -315,8 +363,8 @@ void *process_request(void *params){
     pthread_mutex_unlock(&op_lock);
 
     //dar free ao current
-    free(current->key);
-    data_destroy(current->data);
+    //free(current->key);
+    //data_destroy(current->data);
     free(current);
 
     pthread_mutex_unlock(&queue_lock);
