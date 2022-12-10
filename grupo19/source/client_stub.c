@@ -16,7 +16,7 @@ struct rtree_t *zkConn;
 
 /* Zookeeper stuff */
 // PRECISAMOS DO HOST_PORT GLOBAL?
-#define ZDATALEN 1024 * 1024
+#define ZDATALEN 1024 
 struct rtree_t *head;
 struct rtree_t *tail;
 static char *root_path = "/chain";
@@ -98,7 +98,6 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
 
 //return 0(OK) or -1 in case couldnt connect to server
 int connectToZKServer(struct rtree_t *server, char *serverInfo){
-    printf("AQUI : NOVO: %s\n\n\n", serverInfo);
     //VERIFICAR SE FUNCIONA
     char *host = strtok((char *)serverInfo, ":"); // hostname    removed:
     int port = atoi(strtok(NULL, ":"));     // port      '<' ':' '>'
@@ -119,7 +118,9 @@ int connectToZKServer(struct rtree_t *server, char *serverInfo){
 struct rtree_t *rtree_connect(const char *address_port){
     zkConn = (struct rtree_t *)malloc(sizeof(struct rtree_t));
     head = (struct rtree_t *)malloc(sizeof(struct rtree_t));
+    //head->zk_identifier = malloc(ZDATALEN);
     tail = (struct rtree_t *)malloc(sizeof(struct rtree_t));
+    //tail->zk_identifier = malloc(ZDATALEN);
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
  
     // Ligar a ZooKeeper
@@ -172,8 +173,8 @@ struct rtree_t *rtree_connect(const char *address_port){
         zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
         zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
     }
-    printf("AQUI : NOVO: %s\n\n\n", headInfo);
-    printf("AQUI : NOVO: %s\n\n\n", tailInfo);
+    printf("HEAD INFO: %s\n", headInfo);
+    printf("TAIL INFO: %s\n", tailInfo);
     //conetar a esses servidores para enviar/receber pedidos
     //dados conexao mantidos em rtree head/tail
     if(connectToZKServer(head, headInfo) == -1){
@@ -199,11 +200,11 @@ int rtree_disconnect(struct rtree_t *rtree) {
         return -1;
     if (network_close(tail) != 0)
         return -1;
-    if (network_close(zkConn) != 0)
-        return -1;
-    
+    free(head->zk_identifier);
     free(head);
+    free(tail->zk_identifier);
     free(tail);
+    zookeeper_close(zkConn->zh);
     free(zkConn);
     return 0;
 }
