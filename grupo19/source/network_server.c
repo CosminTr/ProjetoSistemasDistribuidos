@@ -144,6 +144,7 @@ MessageT *network_receive(int client_socket) {
 }
 
 int network_send(int client_socket, MessageT *msg) {
+    printf("ALGURES\n");
     int msglen = message_t__get_packed_size(msg);
     int netlong = htonl(msglen);
     uint8_t *buffer = malloc(msglen);
@@ -152,7 +153,9 @@ int network_send(int client_socket, MessageT *msg) {
     write(client_socket, &netlong, sizeof(int));
     write_all(client_socket, buffer, msglen);
     free(buffer);
+    printf("BILHA DE GAS: %d\n", client_socket);
     message_t__free_unpacked(msg, NULL);
+    printf("BILHA DE GAS: %d\n", client_socket);
     return 0;
 }
 

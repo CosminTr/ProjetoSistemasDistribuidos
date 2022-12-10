@@ -5,7 +5,7 @@
 #include "tree.h"
 #include "message_private.h"
 #include "zookeeper/zookeeper.h"
-#include "network_client.h"
+#include "network_server.h"
 
 struct request_t {
     int op_n;       //o número da operação
@@ -21,7 +21,7 @@ struct rtree_t {
     int socket_num;
 
     //CONFIRM
-    char *zk_identifier;
+    char *zk_identifier;//nome do node (ex node000001)
     //char *zk_next_id; irrelevante pq faz o mm que zk_identifier
     //char *node_path
     //possivelmente meter aqui o path completo

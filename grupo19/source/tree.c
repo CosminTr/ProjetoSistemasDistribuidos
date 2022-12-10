@@ -186,6 +186,8 @@ int tree_height(struct tree_t *tree){
 
 char **tree_get_keys(struct tree_t *tree){ 
     int treeSize = tree_size(tree);
+    if(treeSize == 0)
+        return NULL;
     char **key_list = malloc((treeSize + 1)* sizeof(*key_list)); 
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;
@@ -214,6 +216,8 @@ void get_keys_recursive(struct tree_t *tree, int *positionCounter, char **key_li
 
 void **tree_get_values(struct tree_t *tree){
     int treeSize = tree_size(tree);
+    if(treeSize == 0)
+        return NULL;
     void **value_list = malloc((treeSize + 1) * sizeof(struct data_t));
     int *positionCounter = malloc(sizeof(int));
     *positionCounter = 0;

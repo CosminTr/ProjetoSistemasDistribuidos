@@ -4,7 +4,7 @@ INC_DIR = include
 BIN_DIR = binary
 OBJ_DIR = object
 LIB_DIR = lib
-CFLAGS = -D THREADED -g -Wall -I 
+CFLAGS = -g -Wall -I 
 COMPILE  = $(CC) $(CFLAGS) $(INC_DIR) -o $(OBJ_DIR)/$@ -c $<
 
 
@@ -28,10 +28,10 @@ client-lib.o: $(client-lib)
 	ld -r $(addprefix $(OBJ_DIR)/,$^) -o $(LIB_DIR)/$@
 
 tree-client: $(tree-client)
-	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -lzookeeper_mt -o $(BIN_DIR)/$@
+	$(CC) -D THREADED $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -lprotobuf-c -o $(BIN_DIR)/$@ -lzookeeper_mt
 
 tree-server: $(tree-server)
-	$(CC) $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -pthread -lprotobuf-c -lzookeeper_mt -o $(BIN_DIR)/$@
+	$(CC) -D THREADED $(addprefix $(OBJ_DIR)/,$^) -I/usr/local/include -L/usr/local/lib -pthread -lprotobuf-c -o $(BIN_DIR)/$@ -lzookeeper_mt
 
 
 
