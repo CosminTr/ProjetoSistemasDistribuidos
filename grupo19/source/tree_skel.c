@@ -91,6 +91,7 @@ int tree_skel_init() {
 }
 
 void tree_skel_destroy() {
+    //dar join da thread
     //free(new_path);
     close(zk_tree->socket_num);
     pthread_mutex_lock(&queue_lock);
@@ -314,60 +315,62 @@ MessageT *createDelMessage(char *key){
 
 //preciso mudar locks?
 void *process_request(void *params){ 
-    pthread_mutex_lock(&queue_lock);
-    while (queue_head == NULL){ // fila vazia->esperar
-        pthread_cond_wait(&queue_not_empty, &queue_lock);
-        if (close_threads == 1){
-            pthread_mutex_unlock(&queue_lock);
-            return NULL;
+    while(close_threads==0){
+        pthread_mutex_lock(&queue_lock);
+        while (queue_head == NULL){ // fila vazia->esperar
+            pthread_cond_wait(&queue_not_empty, &queue_lock);
+            if (close_threads == 1){
+                pthread_mutex_unlock(&queue_lock);
+                return NULL;
+            }
         }
-    }
-    struct request_t *current = queue_head; // pega no elemento do inicio da fila
-    queue_head = current->next;
+        struct request_t *current = queue_head; // pega no elemento do inicio da fila
+        queue_head = current->next;
 
-    // colocar o id na fila "in_progress"------------
-    pthread_mutex_lock(&op_lock); 
-    for (int i = 0; op_current.in_progress[i] != -1; i++)
-        if (op_current.in_progress[i] != 0)
-            op_current.in_progress[i] = current->op_n;
-    pthread_mutex_unlock(&op_lock);
-    //----------------------------------------------
+        // colocar o id na fila "in_progress"------------
+        pthread_mutex_lock(&op_lock); 
+        for (int i = 0; op_current.in_progress[i] != -1; i++)
+            if (op_current.in_progress[i] != 0)
+                op_current.in_progress[i] = current->op_n;
+        pthread_mutex_unlock(&op_lock);
+        //----------------------------------------------
 
-    // processar o current request-------------------
-    if (current->op == 1){ // put
-        pthread_mutex_lock(&tree_lock);
-        if (tree_put(rtree, current->key, current->data) == -1)
-            printf("Error inserting entry\n");
-        if(zk_tree->socket_num != 0){
-            network_send(zk_tree->socket_num, createPutMessage(current->key, current->data));        
+        // processar o current request-------------------
+        if (current->op == 1){ // put
+            pthread_mutex_lock(&tree_lock);
+            if (tree_put(rtree, current->key, current->data) == -1)
+                printf("Error inserting entry\n");
+            pthread_mutex_unlock(&tree_lock);
+            if(zk_tree->socket_num != 0){
+                network_send(zk_tree->socket_num, createPutMessage(current->key, current->data));        
+            }
         }
-        pthread_mutex_unlock(&tree_lock);
-    }
-    else if (current->op == 0){ // del
-        pthread_mutex_lock(&tree_lock);
-        if (tree_del(rtree, current->key) == -1)
-            printf("Key not found\n");
-        if(zk_tree->socket_num != 0){
-            network_send(zk_tree->socket_num, createDelMessage(current->key));        
+        else if (current->op == 0){ // del
+            pthread_mutex_lock(&tree_lock);
+            if (tree_del(rtree, current->key) == -1)
+                printf("Key not found\n");
+            pthread_mutex_unlock(&tree_lock);
+            if(zk_tree->socket_num != 0){
+                network_send(zk_tree->socket_num, createDelMessage(current->key));        
+            }
         }
-        pthread_mutex_unlock(&tree_lock);
+        //----------------------------------------------
+        pthread_mutex_lock(&op_lock);
+        if (current->op_n > op_current.max_proc) // substituir max_proc se necessario
+            op_current.max_proc = current->op_n;
+
+        for (int i = 0; op_current.in_progress[i] != -1; i++) // remover id de in_progress
+            if (op_current.in_progress[i] == current->op_n)
+                op_current.in_progress[i] = 0;
+        pthread_mutex_unlock(&op_lock);
+
+        //dar free ao current
+        //free(current->key);
+        //data_destroy(current->data);
+        free(current);
+
+        pthread_mutex_unlock(&queue_lock);
     }
-    //----------------------------------------------
-    pthread_mutex_lock(&op_lock);
-    if (current->op_n > op_current.max_proc) // substituir max_proc se necessario
-        op_current.max_proc = current->op_n;
-
-    for (int i = 0; op_current.in_progress[i] != -1; i++) // remover id de in_progress
-        if (op_current.in_progress[i] == current->op_n)
-            op_current.in_progress[i] = 0;
-    pthread_mutex_unlock(&op_lock);
-
-    //dar free ao current
-    //free(current->key);
-    //data_destroy(current->data);
-    free(current);
-
-    pthread_mutex_unlock(&queue_lock);
     return NULL;
 }
 
