@@ -61,7 +61,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             //conseguir nome do menor node e maior node(ex: node0000001)
             fprintf(stderr, "\n=== znode listing === [ %s ]", root_path);
             for (int i = 0; i < children_list->count; i++){
-                printf("CHILD: %s\n\n", children_list->data[i]);
+                printf("CHILD: %s\n", children_list->data[i]);
                 head->zk_identifier = children_list->data[0];
                 tail->zk_identifier = children_list->data[0];
                 for (int i = 0; i < children_list->count; i++){
@@ -72,7 +72,8 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 }
             }
             fprintf(stderr, "\n=== done ===\n");
-            sleep(6);
+            sleep(6);//dorme para dar tempo aos nodes reorganizarem
+
             //conseguir path do maior e menor node (ex: /chain/node000001)
             strcpy(headPath, root_path);
             strcat(headPath, "/");
@@ -124,9 +125,7 @@ int connectToZKServer(struct rtree_t *server, char *serverInfo){
 struct rtree_t *rtree_connect(const char *address_port){
     zkConn = (struct rtree_t *)malloc(sizeof(struct rtree_t));
     head = (struct rtree_t *)malloc(sizeof(struct rtree_t));
-    //head->zk_identifier = malloc(ZDATALEN);
     tail = (struct rtree_t *)malloc(sizeof(struct rtree_t));
-    //tail->zk_identifier = malloc(ZDATALEN);
     children_list = (zoo_string *)malloc(sizeof(zoo_string));
  
     // Ligar a ZooKeeper
@@ -149,7 +148,6 @@ struct rtree_t *rtree_connect(const char *address_port){
         // Possibilidade de usar um watch do /chain se nao existir (no valor 0)
         if (ZNONODE == zoo_exists(zkConn->zh, root_path, 0, NULL)){
             printf("Error: %s doesnt exist!!", root_path);
-            //exit(1);
         }
         
         if (ZOK != zoo_wget_children(zkConn->zh, root_path, &child_watcher, watcher_ctx, children_list)){
