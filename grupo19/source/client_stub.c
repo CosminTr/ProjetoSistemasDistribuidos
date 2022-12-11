@@ -57,9 +57,10 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                 fprintf(stderr, "Error setting watch at %s!\n", root_path);
             }
             //conseguir nome do menor node e maior node(ex: node0000001)
-            fprintf(stderr, "\n=== znode listing === [ %s ]", root_path);
+            printf("Ao reconetar aos servidores...\n");
+            //fprintf(stderr, "\n=== znode listing === [ %s ]", root_path);
             for (int i = 0; i < children_list->count; i++){
-                printf("CHILD: %s\n", children_list->data[i]);
+                //printf("CHILD: %s\n", children_list->data[i]);
                 head->zk_identifier = children_list->data[0];
                 tail->zk_identifier = children_list->data[0];
                 for (int i = 0; i < children_list->count; i++){
@@ -69,7 +70,7 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
                         tail->zk_identifier = children_list->data[i];
                 }
             }
-            fprintf(stderr, "\n=== done ===\n");
+            //fprintf(stderr, "\n=== done ===\n");
             sleep(6);//dorme para dar tempo aos nodes reorganizarem
 
             //conseguir path do maior e menor node (ex: /chain/node000001)
@@ -84,8 +85,8 @@ static void child_watcher(zhandle_t *wzh, int type, int state, const char *zpath
             zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
             //conetar a esses servidores para enviar/receber pedidos
             //dados conexao mantidos em rtree head/tail
-            printf("HEADpath: %s\n\n", headPath);
-            printf("TAILpath: %s\n\n", tailPath);
+            //printf("HEADpath: %s\n\n", headPath);
+            //printf("TAILpath: %s\n\n", tailPath);
             if(connectToZKServer(head, headInfo) == -1){
                 printf("Erro ao conetar a Head");
                 exit(1);
@@ -153,7 +154,7 @@ struct rtree_t *rtree_connect(const char *address_port){
         }
 
         //conseguir nome do menor node e maior node(ex: node0000001)
-        fprintf(stderr, "\n=== znode Head and Tail set === [ %s ]", root_path);
+        //fprintf(stderr, "\n=== znode Head and Tail set === [ %s ]", root_path);
         head->zk_identifier = children_list->data[0];
         tail->zk_identifier = children_list->data[0];
         for (int i = 0; i < children_list->count; i++){
@@ -162,7 +163,7 @@ struct rtree_t *rtree_connect(const char *address_port){
             if (strcmp(children_list->data[i], tail->zk_identifier) > 0)
                 tail->zk_identifier = children_list->data[i];
         }
-        fprintf(stderr, "\n=== done ===\n");
+        //fprintf(stderr, "\n=== done ===\n");
         //conseguir path do maior e menor node (ex: /chain/node000001)
         strcpy(headPath, root_path);
         strcat(headPath, "/");
@@ -175,8 +176,8 @@ struct rtree_t *rtree_connect(const char *address_port){
         zoo_get(zkConn->zh, headPath, 0, headInfo, &data_len, NULL);
         zoo_get(zkConn->zh, tailPath, 0, tailInfo, &data_len, NULL);
     }
-    printf("HEAD INFO: %s\n", headInfo);
-    printf("TAIL INFO: %s\n", tailInfo);
+    //printf("HEAD INFO: %s\n", headInfo);
+    //printf("TAIL INFO: %s\n", tailInfo);
     //conetar a esses servidores para enviar/receber pedidos
     //dados conexao mantidos em rtree head/tail
     if(connectToZKServer(head, headInfo) == -1){
