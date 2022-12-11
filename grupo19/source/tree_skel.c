@@ -19,7 +19,6 @@ typedef struct String_vector zoo_string;
 zoo_string *children_list;
 const char *zoo_path = "/chain";
 static char *watcher_ctx = "ZooKeeper Data Watcher";
-//int new_path_len = 1024;
 char* new_path;
 
 //remote tree---------------
@@ -86,7 +85,8 @@ void tree_skel_destroy() {
     //free zk related-----
     free(new_path);
     free(zk_tree->zk_identifier);
-    free(zk_tree->next_server);
+    if(strcmp(zk_tree->next_server, "none")!=0)
+        free(zk_tree->next_server);
     //--------------------
     //multithreaded related
     pthread_mutex_lock(&queue_lock);

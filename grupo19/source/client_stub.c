@@ -15,7 +15,6 @@
 struct rtree_t *zkConn;
 
 /* Zookeeper stuff */
-// PRECISAMOS DO HOST_PORT GLOBAL?
 #define ZDATALEN 1024 
 struct rtree_t *head;
 struct rtree_t *tail;
@@ -26,9 +25,8 @@ static char *watcher_ctx = "ZooKeeper Data Watcher";
 
 /* --------------- */
 
-//Preciso uma vez que ZNode é efemero?
 void close_free(int sig){
-    rtree_disconnect(zkConn);//nao interessa o parametro
+    rtree_disconnect(zkConn);
     printf("Cliente fechou devido a Ctrl+C\n");
     exit(1);
 }
@@ -205,9 +203,8 @@ int rtree_disconnect(struct rtree_t *rtree) {
         return -1;
     if (network_close(tail) != 0)
         return -1;
-    free(head->zk_identifier);
+        
     free(head);
-    free(tail->zk_identifier);
     free(tail);
     zookeeper_close(zkConn->zh);
     free(zkConn);
