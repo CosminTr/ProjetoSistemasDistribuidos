@@ -83,11 +83,12 @@ int tree_skel_init() {
 }
 
 void tree_skel_destroy() {
-    // if(zk_tree->socket_num!=0)
-    //     close(zk_tree->socket_num);
+    //free zk related-----
     free(new_path);
     free(zk_tree->zk_identifier);
     free(zk_tree->next_server);
+    //--------------------
+    //multithreaded related
     pthread_mutex_lock(&queue_lock);
     close_threads = 1;
     pthread_cond_broadcast(&queue_not_empty);
@@ -98,9 +99,12 @@ void tree_skel_destroy() {
     pthread_mutex_destroy(&queue_lock);
     pthread_mutex_destroy(&tree_lock);
     pthread_mutex_destroy(&op_lock);
+    //-----------------------
+    //strctural related(zk + tree)
     zookeeper_close(zk_tree->zh);
     free(zk_tree);
     tree_destroy(rtree);
+    //--------------------------
 }
 //NOTA QUAIS OS CASOS DE ERRO PARA SIZE, HEIGHT, VERIFY, PUT, DEL?
 int invoke(MessageT *msg) {
